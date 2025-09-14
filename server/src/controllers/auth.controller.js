@@ -31,16 +31,32 @@ async function signup(req, res) {
 
 async function login(req, res) {
     try {
+        // same as sign up except we just need two things for login 
+        // 1. email (or username in this case is not included) 
+        // 2. password
         const { email, password } = req.body;
         const user = await findUserByEmail(email);
 
+        // if the user email is not present in our db 
+        // return Error
         if (!user) return res.status(400).json({ error: 'Invalid Credentials' });
         const valid = await bcrypt.compare(password, user.password_hash);
+        // if the password is not correct or does not present in our db
+        // return error
         if (!valid) return res.status(400).json({ error: 'Invalid Credentials' });
 
+        const token = jwt.sign(
+            { id: user.id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN }
+        );
+
+        res.join({ token, user: {id: user.id, role: user.role, name: user.name } });
         
-    } catch (error) {
-        
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 }
+
+module.exports = { signup, login };
 
