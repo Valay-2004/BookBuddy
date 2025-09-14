@@ -51,7 +51,7 @@ async function login(req, res) {
             { expiresIn: process.env.JWT_EXPIRES_IN }
         );
 
-        res.join({ token, user: {id: user.id, role: user.role, name: user.name } });
+        res.json({ token, user: {id: user.id, role: user.role, name: user.name } });
         
     } catch (err) {
         res.status(500).json({ error: err.message });
