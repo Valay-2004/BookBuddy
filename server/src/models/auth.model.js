@@ -16,7 +16,7 @@ async function createUser({name, email, passwordHash, role = 'user' }) {
         RETURNING id, name, email, role`,
         [name, email, passwordHash, role]
     );
-    return row[0];
+    return rows[0];
 }
 
 module.exports = { findUserByEmail, createUser };
