@@ -1,5 +1,5 @@
 const { getAllBooks, createBook } = require("../models/book.model");
-
+console.log(require("../models/book.model"));
 async function listBooks(req, res) {
   try {
     const books = await getAllBooks();
