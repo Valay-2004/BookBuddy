@@ -13,4 +13,4 @@ async function createBook(title, author, description) {
   return rows[0];
 }
 
-module.exports = { createBook, getAllBooks };
+module.exports = { getAllBooks, createBook };
