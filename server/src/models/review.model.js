@@ -25,3 +25,19 @@ async function getReviewsForBook(bookId) {
     [bookId]
   );
 }
+
+// create a function to get the ratings for book
+async function getBookRatings(params) {
+  const { rows } = await db.query(
+    `SELECT b.id, b.title, b.author,
+        COALESCE(ROUND(AVG(r.rating), 2), 0) AS average_rating,
+        COUNT(r.id AS total_reviews)
+        FROM books b
+        LEFT JOIN reviews r ON b.id = r.book_id
+        GROUP BY b.id
+        ORDER BY average_rating DESC;`
+  );
+  return rows;
+}
+
+module.exports = { addReview, getReviewsForBook, getBookRatings };
