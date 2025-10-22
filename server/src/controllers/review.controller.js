@@ -34,7 +34,7 @@ async function getBookReviews(req, res) {
 }
 
 // listing books with review
-async function listBookWithRatings(req, res) {
+async function listBooksWithRatings(req, res) {
   try {
     const book = await getBookRatings();
     res.json(books);
@@ -44,4 +44,4 @@ async function listBookWithRatings(req, res) {
 }
 
 // exporting modules
-module.exports = { postReview, getBookReviews, listBookWithRatings };
+module.exports = { postReview, getBookReviews, listBooksWithRatings };
