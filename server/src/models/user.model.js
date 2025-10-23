@@ -14,8 +14,27 @@ async function getUserProfile(userId) {
     FROM users u
     LEFT JOIN reviews r ON u.id = r.user_id
     LEFT JOIN books b ON r.book_id = b.id
-    WHERE u.id = $1
-`,
+    WHERE u.id = $1`,
     [userId]
   );
+
+  if (rows.length === 0) return null;
+
+  const user = {
+    id: rows[0].user_id,
+    name: rows[0].name,
+    email: rows[0].email,
+    reviews: rows
+      .filter((row) => row.review_id !== null)
+      .map((row) => ({
+        review_id: row.review_id,
+        rating: row.rating,
+        review_text: row.review_text,
+        book_title: row.book_title,
+      })),
+  };
+
+  return user;
 }
+
+module.exports = { getUserProfile };
