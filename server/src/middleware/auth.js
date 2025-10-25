@@ -30,7 +30,7 @@ function authorizeRole(role) {
     if (req.user.role !== role) {
       return res
         .status(403)
-        .json({ error: 'Access Denied: You don"t have the privileges' });
+        .json({ error: `Access Denied: You are not an admin!` });
     }
     next();
   };
