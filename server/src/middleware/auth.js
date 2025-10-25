@@ -24,4 +24,17 @@ function authenticate(req, res, next) {
   }
 }
 
+// adding a helper for authorize
+function authorizeRole(role) {
+  return (req, res, next) => {
+    if (req.user.role !== role) {
+      return res
+        .status(403)
+        .json({ error: 'Access Denied: You don"t have the privileges' });
+    }
+    next();
+  };
+}
+
 module.exports = authenticate;
+module.exports.authorizeRole = authorizeRole;
