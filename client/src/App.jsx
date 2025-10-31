@@ -4,11 +4,11 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
 
-function App() {
+export default function App() {
   return (
     <Router>
       <nav style={{ padding: "1rem", background: "#eee" }}>
-        <Link to="/">Books</Link> |<Link to="/login">Login</Link> |
+        <Link to="/">Books</Link> | <Link to="/login">Login</Link> |{" "}
         <Link to="/signup">Signup</Link>
       </nav>
 
@@ -21,5 +21,3 @@ function App() {
     </Router>
   );
 }
-
-export default App;

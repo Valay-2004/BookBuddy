@@ -3,7 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import API from "../services/api";
 
 export default function Profile() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [profile, setProfile] = useState(null);
 
   useEffect(() => {
