@@ -23,14 +23,7 @@ export default function Login() {
 
   return (
     <div style={{ padding: "2rem" }}>
-      <h2>
-        <img
-          src="./assets/login.png"
-          alt="Login icon"
-          style={{ width: "24px", height: "24px", marginRight: "8px" }}
-        />{" "}
-        Login
-      </h2>
+      <h2>🔐 Login</h2>
       <form onSubmit={handleSubmit}>
         <input
           type="email"
@@ -48,7 +41,12 @@ export default function Login() {
           required
         />{" "}
         <br />
-        <button type="submit">Login</button>
+        <button
+          type="submit"
+          style={{ color: "whitesmoke", background: "#2196F3" }}
+        >
+          Login
+        </button>
       </form>
       {error && <p style={{ color: "red" }}>{error}</p>}
     </div>

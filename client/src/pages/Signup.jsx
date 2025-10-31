@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { signup } from "../services/auth";
 import { useNavigate } from "react-router-dom";
-const signupIcon = "../assets/signup.png";
 
 export default function Signup() {
   const [name, setName] = useState("");
@@ -24,9 +23,7 @@ export default function Signup() {
   // return the page
   return (
     <div style={{ padding: "2rem" }}>
-      <h2>
-        <img src={signupIcon} alt="Signup" /> SignUp
-      </h2>
+      <h2>🪧 SignUp</h2>
       <form onSubmit={handleSubmit}>
         <input
           type="text"
