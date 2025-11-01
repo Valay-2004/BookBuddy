@@ -23,3 +23,11 @@ app.use("/api/auth", authRoutes); // for authRoutes
 app.use("/api", reviewRoutes); // for reviews routes
 app.use("/api/users", userRoutes); // for user profile routes
 app.use("/api", adminRoutes); // for admin actions routes
+
+// Adding the centralized errorHandler
+const errorHandler = require("./src/middleware/errorHandler");
+app.use(errorHandler);
+
+// Port for server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
