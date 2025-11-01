@@ -6,7 +6,7 @@ const router = express.Router();
 router.post(
   "/signup",
   [
-    body("name").isLength()({ min: 3 }.trim().escape()),
+    body("name").isLength({ min: 3 }).trim().escape(),
     body("email").isEmail().normalizeEmail(),
     body("password").isLength({ min: 8 }),
   ],
