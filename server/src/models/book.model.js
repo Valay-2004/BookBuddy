@@ -1,7 +1,13 @@
 const db = require("../config/database");
 
-async function getAllBooks() {
-  const { rows } = await db.query("SELECT * FROM books");
+async function getAllBooks(page = 1, limit = 5) {
+  const offset = (page - 1) * limit;
+
+  const { rows } = await db.query(
+    "SELECT * FROM books ORDER BY id LIMIT $1 OFFSET $2",
+    [limit, offset]
+  );
+
   return rows;
 }
 
