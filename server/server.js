@@ -1,22 +1,25 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
+require("dotenv").config();
+
+// Routes
 const authRoutes = require("./src/routes/auth.routes");
 const bookRoutes = require("./src/routes/book.routes");
 const reviewRoutes = require("./src/routes/review.routes");
 const userRoutes = require("./src/routes/user.routes");
 const adminRoutes = require("./src/routes/admin.routes");
 
-const app = express();
-app.use(cors());
+const app = express(); // Express
+
+app.use(helmet()); // Security
+app.use(morgan("dev")); // Logging
+app.use(cors()); // cors
 app.use(express.json());
-// for bookRoutes
-app.use("/api/books", bookRoutes);
-// for authRoutes
-app.use("/api/auth", authRoutes);
-// for reviews routes
-app.use("/api", reviewRoutes);
-app.listen(5000, () => console.log("Server running on port 5000"));
-// for user profile routes
-app.use("/api", userRoutes);
-// for admin actions routes
-app.use("/api", adminRoutes);
+
+app.use("/api/books", bookRoutes); // for bookRoutes
+app.use("/api/auth", authRoutes); // for authRoutes
+app.use("/api", reviewRoutes); // for reviews routes
+app.use("/api/users", userRoutes); // for user profile routes
+app.use("/api", adminRoutes); // for admin actions routes
