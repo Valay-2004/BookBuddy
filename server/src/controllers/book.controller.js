@@ -1,9 +1,12 @@
 const { getAllBooks, createBook } = require("../models/book.model");
-console.log(require("../models/book.model"));
+const { deleteBook } = require("./admin.controller");
+// console.log(require("../models/book.model"));
 async function listBooks(req, res) {
   try {
-    const books = await getAllBooks();
-    res.json(books);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const books = await getAllBooks(page, limit);
+    res.json({ success: true, page, limit, books });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -19,4 +22,5 @@ async function addBook(req, res) {
     return res.status(500).json({ error: "Failed to add book" });
   }
 }
+
 module.exports = { listBooks, addBook };
