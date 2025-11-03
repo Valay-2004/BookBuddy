@@ -1,21 +1,4 @@
-/* body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
- */
-
 @import "tailwindcss";
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #161b88;
-}
 
 h1 {
   font-size: 3.2em;
