@@ -7,9 +7,25 @@ import Profile from "./pages/Profile";
 export default function App() {
   return (
     <Router>
-      <nav style={{ padding: "1rem", background: "#eee" }}>
-        <Link to="/">Books</Link> | <Link to="/login">Login</Link> |{" "}
-        <Link to="/signup">Signup</Link>
+      <nav className="flex justify-between items-center px-6 py-3 bg-indigo-600 text-white shadow-md">
+        {/* Left section */}
+        <div className="space-x-4">
+          <Link to="/" className="hover:text-indigo-200 transition-colors">
+            Books
+          </Link>
+          <Link to="/login" className="hover:text-indigo-200 transition-colors">
+            Login
+          </Link>
+          <Link
+            to="/signup"
+            className="hover:text-indigo-200 transition-colors"
+          >
+            Signup
+          </Link>
+        </div>
+
+        {/* Right section [the dark mode button will be here]*/}
+        <div className="flex items-center gap-3"></div>
       </nav>
 
       <Routes>
