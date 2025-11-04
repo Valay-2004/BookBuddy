@@ -3,6 +3,7 @@ import Books from "./pages/Books";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Profile from "./pages/Profile";
+import ToggleTheme from "./components/ThemeToggle";
 
 export default function App() {
   return (
@@ -25,7 +26,9 @@ export default function App() {
         </div>
 
         {/* Right section [the dark mode button will be here]*/}
-        <div className="flex items-center gap-3"></div>
+        <div className="flex items-center gap-3">
+          <ToggleTheme />
+        </div>
       </nav>
 
       <Routes>
