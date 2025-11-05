@@ -9,7 +9,7 @@ const ThemeToggle = () => {
       "(prefers-color-scheme: dark)"
     ).matches;
     const initialTheme = savedTheme || (systemPreferDark ? "dark" : "light");
-    setTheme(ini);
+    setTheme(initialTheme);
   }, []);
 
   useEffect(() => {
