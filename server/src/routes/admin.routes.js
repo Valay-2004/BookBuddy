@@ -23,7 +23,8 @@ router.delete(
 router.get(
   "/admin/reviews",
   authenticate,
-  authorizeRole("admin", getAllReviews)
+  authorizeRole("admin"),
+  getAllReviews
 );
 router.delete(
   "/admin/reviews/:id",
