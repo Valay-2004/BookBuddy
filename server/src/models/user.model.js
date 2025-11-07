@@ -7,6 +7,7 @@ async function getUserProfile(userId) {
         u.id AS user_id, 
         u.name, 
         u.email, 
+        u.role AS role,
         r.id AS review_id, 
         r.rating, 
         r.review_text, 
@@ -24,6 +25,7 @@ async function getUserProfile(userId) {
     id: rows[0].user_id,
     name: rows[0].name,
     email: rows[0].email,
+    role: rows[0].role || "user",
     reviews: rows
       .filter((row) => row.review_id !== null)
       .map((row) => ({
