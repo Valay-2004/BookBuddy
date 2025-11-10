@@ -37,7 +37,7 @@ export default function Profile() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-gray-900 dark:to-indigo-950 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-r from-indigo-50 to-blue-100 dark:from-gray-900 dark:to-indigo-950 p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -67,7 +67,7 @@ export default function Profile() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-gray-900 dark:to-indigo-950">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-r from-indigo-50 to-blue-100 dark:from-gray-900 dark:to-indigo-950">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 max-w-2xl mx-4 w-full">
           <div className="animate-pulse space-y-6">
             <div className="flex items-center justify-between">
@@ -103,7 +103,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-blue-100 dark:from-gray-900 dark:to-indigo-950 p-4">
+    <div className="min-h-screen bg-linear-to-r from-indigo-50 to-blue-100 dark:from-gray-900 dark:to-indigo-950 p-4">
       <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -111,7 +111,7 @@ export default function Profile() {
           className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl overflow-hidden"
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+          <div className="bg-linear-to-r from-indigo-600 to-purple-600 p-6 text-white">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex items-center space-x-4">
                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
