@@ -21,12 +21,13 @@ export default function Signup() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
     try {
       const res = await API.post("/auth/signup", formData);
+      toast.success("Signup successful! Please log in.");
+      setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.data?.error || "Signup failed");
+      toast.error(err.response?.data?.error || "Signup failed!");
     } finally {
       setLoading(false);
     }
@@ -34,21 +35,23 @@ export default function Signup() {
 
   return (
     <motion.div
-      className="flex items-center justify-center min-h-[80vh] px-4"
+      className="flex items-center justify-center min-h-screen px-4"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
       <Toaster position="top-right" />
+
       <motion.form
         onSubmit={handleSubmit}
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md bg-white dark:bg-gray-800 shadow-xl rounded-xl p-8 border-gray-200 dark:border-gray-700"
+        className="w-full max-w-md bg-white dark:bg-gray-800 shadow-xl rounded-xl p-8 border border-gray-200 dark:border-gray-700"
       >
         <h2 className="text-2xl font-bold text-center text-indigo-600 dark:text-indigo-400 mb-6">
           Create an Account
         </h2>
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -79,7 +82,7 @@ export default function Signup() {
           </div>
 
           <div>
-            <label className="black text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Password
             </label>
             <input
@@ -100,7 +103,7 @@ export default function Signup() {
               rows={2}
               value={formData.address}
               onChange={(e) => handleChange("address", e.target.value)}
-              placeholder="Enter Your Address (Optional)"
+              placeholder="Your address (Optional)"
               className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none"
             />
           </div>
@@ -112,14 +115,16 @@ export default function Signup() {
             disabled={loading}
             className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-lg shadow-md transition disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {loading ? "Creating Account .." : "Sign Up"}
+            {loading ? "Creating Account..." : "Sign Up"}
           </motion.button>
         </div>
 
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 text-center">
-          Already have an account?
-          <a href="/login" className="text-indigo-600 dark:text-indigo-400">
-            {" "}
+          Already have an account?{" "}
+          <a
+            href="/login"
+            className="text-indigo-600 dark:text-indigo-400 hover:underline"
+          >
             Log in
           </a>
         </p>
