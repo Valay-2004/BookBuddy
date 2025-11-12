@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { Link } from "react-router-dom";
 import { login as loginService } from "../services/auth";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -151,12 +152,12 @@ export default function Login() {
           <div className="mt-6 text-center">
             <p className="text-gray-600 dark:text-gray-400 text-sm">
               Don't have an account?{" "}
-              <a
-                href="/signup"
+              <Link
+                to="/signup"
                 className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition"
               >
                 Sign up
-              </a>
+              </Link>
             </p>
           </div>
         </div>
