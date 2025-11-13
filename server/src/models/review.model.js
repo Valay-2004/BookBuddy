@@ -32,7 +32,7 @@ async function getBookRatings(params) {
   const { rows } = await db.query(
     `SELECT b.id, b.title, b.author,
         COALESCE(ROUND(AVG(r.rating), 2), 0) AS average_rating,
-        COUNT(r.id AS total_reviews)
+        COUNT(r.id) AS total_reviews
         FROM books b
         LEFT JOIN reviews r ON b.id = r.book_id
         GROUP BY b.id
