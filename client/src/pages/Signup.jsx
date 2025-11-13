@@ -123,7 +123,7 @@ export default function Signup() {
           Already have an account?{" "}
           <a
             href="/login"
-            className="text-indigo-600 dark:text-indigo-400 hover:underline"
+            className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition"
           >
             Log in
           </a>
