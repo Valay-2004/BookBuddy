@@ -9,6 +9,38 @@ export function AuthProvider({ children }) {
   });
   const [token, setToken] = useState(() => localStorage.getItem("token"));
 
+  // track token expiry timer
+  useEffect(() => {
+    let timer;
+    try {
+      if (token) {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        if (payload && payload.exp) {
+          const expiresAt = payload.exp * 1000;
+          const now = Date.now();
+          const ms = expiresAt - now;
+          if (ms <= 0) {
+            // token already expired
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem("user");
+            localStorage.removeItem("token");
+          } else {
+            timer = setTimeout(() => {
+              setUser(null);
+              setToken(null);
+              localStorage.removeItem("user");
+              localStorage.removeItem("token");
+            }, ms);
+          }
+        }
+      }
+    } catch (err) {
+      // ignore malformed token
+    }
+    return () => clearTimeout(timer);
+  }, [token]);
+
   useEffect(() => {
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
