@@ -6,6 +6,10 @@ import toast, { Toaster } from "react-hot-toast";
 
 export default function Books() {
   const [books, setBooks] = useState([]);
+  const [page, setPage] = useState(1);
+  const [limit] = useState(6);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,11 +29,14 @@ export default function Books() {
     }
   }, [showForm]);
 
-  const fetchBooks = async () => {
+  const fetchBooks = async (p = page) => {
     try {
       setLoading(true);
-      const res = await API.get("/books?limit=1000"); // Get all books without pagination
-      setBooks(Array.isArray(res.data.books) ? res.data.books : res.data || []);
+      const res = await API.get(`/books?page=${p}&limit=${limit}`);
+      const data = res.data;
+      setBooks(Array.isArray(data.books) ? data.books : []);
+      setTotal(data.total || 0);
+      setTotalPages(data.totalPages || 1);
     } catch (err) {
       console.error("Error fetching books:", err);
       toast.error("Failed to load books");
@@ -39,7 +46,7 @@ export default function Books() {
   };
 
   useEffect(() => {
-    fetchBooks();
+    fetchBooks(page);
   }, []);
 
   const handleAddBook = async (e) => {
@@ -50,7 +57,8 @@ export default function Books() {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Book added successfully!");
-      await fetchBooks(); // Refresh the books list
+      await fetchBooks(1); // Refresh to first page to show new book
+      setPage(1);
       setShowForm(false);
       setNewBook({ title: "", author: "", description: "" });
     } catch (err) {
@@ -58,6 +66,34 @@ export default function Books() {
       console.error(err);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Review UI state
+  const [reviewOpenFor, setReviewOpenFor] = useState(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+
+  const openReview = (bookId) => {
+    setReviewOpenFor(bookId);
+    setReviewRating(5);
+    setReviewText("");
+  };
+
+  const submitReview = async (bookId) => {
+    try {
+      if (!reviewRating) return toast.error("Please select a rating");
+      await API.post(`/books/${bookId}/reviews`, {
+        rating: reviewRating,
+        reviewText,
+      });
+      toast.success("Review saved");
+      setReviewOpenFor(null);
+      // refresh current page
+      await fetchBooks(page);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save review");
     }
   };
 
@@ -268,9 +304,127 @@ export default function Books() {
               <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
                 {book.description}
               </p>
+              <div className="mt-4 flex items-center justify-between gap-3">
+                {user ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() =>
+                        setReviewOpenFor((prev) =>
+                          prev === book.id ? null : book.id
+                        )
+                      }
+                      className="text-sm px-3 py-1 bg-indigo-600 text-white rounded-md cursor-pointer"
+                    >
+                      {reviewOpenFor === book.id
+                        ? "Close"
+                        : "Add / Edit Review"}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500">Login to review</div>
+                )}
+              </div>
             </motion.div>
           ))}
         </motion.div>
+      )}
+
+      {/* Review modal (fixed) */}
+      <AnimatePresence>
+        {reviewOpenFor && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            onClick={() => setReviewOpenFor(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-lg mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-medium mb-3">Add / Edit Review</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm">Rating:</label>
+                  <select
+                    value={reviewRating}
+                    onChange={(e) => setReviewRating(Number(e.target.value))}
+                    className="p-2 rounded-md bg-white dark:bg-gray-700"
+                  >
+                    {[5, 4, 3, 2, 1].map((r) => (
+                      <option key={r} value={r}>
+                        {r} ⭐
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <textarea
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  rows={4}
+                  className="w-full p-3 rounded-md bg-white dark:bg-gray-800"
+                  placeholder="Write your review (optional)"
+                />
+
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => setReviewOpenFor(null)}
+                    className="px-3 py-1 rounded-md border"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() => submitReview(reviewOpenFor)}
+                    className="px-4 py-1 bg-green-600 text-white rounded-md"
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Pagination controls */}
+      {!loading && totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3 mt-6">
+          <button
+            disabled={page <= 1}
+            onClick={() => {
+              setPage((p) => {
+                const np = p - 1;
+                fetchBooks(np);
+                return np;
+              });
+            }}
+            className="px-3 py-1 rounded-md border disabled:opacity-50"
+          >
+            Prev
+          </button>
+          <div className="text-sm">
+            Page {page} of {totalPages}
+          </div>
+          <button
+            disabled={page >= totalPages}
+            onClick={() => {
+              setPage((p) => {
+                const np = p + 1;
+                fetchBooks(np);
+                return np;
+              });
+            }}
+            className="px-3 py-1 rounded-md border disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
       )}
     </div>
   );
