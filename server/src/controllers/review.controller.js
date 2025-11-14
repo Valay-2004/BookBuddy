@@ -7,11 +7,13 @@ const {
 // postReview function
 async function postReview(req, res) {
   try {
-    const { bookId, rating, reviewText } = req.body; // get from body
+    // Support bookId in params (preferred) or body (legacy)
+    const { rating, reviewText } = req.body; // get from body
+    const bookId = req.params.id || req.body.bookId;
     const userId = req.user.id; // comes from JWT middleware
 
     // check if bookId and rating is not available
-    if (!bookId || !rating) {
+    if (!bookId || rating == null) {
       return res.status(400).json({ error: "bookId and rating are required" });
     }
 
@@ -36,7 +38,7 @@ async function getBookReviews(req, res) {
 // listing books with review
 async function listBooksWithRatings(req, res) {
   try {
-    const book = await getBookRatings();
+    const books = await getBookRatings();
     res.json(books);
   } catch (err) {
     res.status(500).json({ error: err.message });
