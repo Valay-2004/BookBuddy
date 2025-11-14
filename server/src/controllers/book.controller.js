@@ -5,8 +5,9 @@ async function listBooks(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 5;
-    const books = await getAllBooks(page, limit);
-    res.json({ success: true, page, limit, books });
+    const { rows, total } = await getAllBooks(page, limit);
+    const totalPages = Math.ceil(total / limit);
+    res.json({ success: true, page, limit, total, totalPages, books: rows });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
