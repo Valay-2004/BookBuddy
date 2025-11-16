@@ -1,18 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import API from "../services/api";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function Signup() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
-    address: "",
   });
+
+  // Redirect logged-in users away from signup page
+  useEffect(() => {
+    if (user) {
+      navigate("/profile", { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -22,7 +30,9 @@ export default function Signup() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await API.post("/auth/signup", formData);
+      // Only send the fields the server expects
+      const { name, email, password } = formData;
+      const res = await API.post("/auth/signup", { name, email, password });
       toast.success("Signup successful! Please log in.");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
