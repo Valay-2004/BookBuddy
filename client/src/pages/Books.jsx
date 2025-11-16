@@ -73,12 +73,36 @@ export default function Books() {
   const [reviewOpenFor, setReviewOpenFor] = useState(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
+  const [bookReviews, setBookReviews] = useState({}); // Store reviews by book ID
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // For delete confirmation
 
   const openReview = (bookId) => {
     setReviewOpenFor(bookId);
     setReviewRating(5);
     setReviewText("");
   };
+
+  // Fetch reviews for a specific book
+  const fetchBookReviews = async (bookId) => {
+    try {
+      const res = await API.get(`/books/${bookId}/reviews`);
+      setBookReviews((prev) => ({
+        ...prev,
+        [bookId]: Array.isArray(res.data) ? res.data : [],
+      }));
+    } catch (err) {
+      console.error("Error fetching reviews:", err);
+    }
+  };
+
+  // Fetch reviews for all books on component mount
+  useEffect(() => {
+    books.forEach((book) => {
+      if (!bookReviews[book.id]) {
+        fetchBookReviews(book.id);
+      }
+    });
+  }, [books]);
 
   const submitReview = async (bookId) => {
     try {
@@ -89,11 +113,26 @@ export default function Books() {
       });
       toast.success("Review saved");
       setReviewOpenFor(null);
-      // refresh current page
+      // Refresh reviews for this book
+      await fetchBookReviews(bookId);
+      // Refresh books list
       await fetchBooks(page);
     } catch (err) {
       console.error(err);
       toast.error("Failed to save review");
+    }
+  };
+
+  // Delete book with confirmation
+  const deleteBook = async (bookId) => {
+    try {
+      await API.delete(`/books/${bookId}`);
+      toast.success("Book deleted");
+      await fetchBooks(page);
+      setDeleteConfirm(null);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete book");
     }
   };
 
@@ -297,6 +336,14 @@ export default function Books() {
                 <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 leading-tight">
                   {book.title}
                 </h3>
+                {user?.role === "admin" && (
+                  <button
+                    onClick={() => setDeleteConfirm(book.id)}
+                    className="text-red-600 hover:text-red-800 text-sm font-medium"
+                  >
+                    ✕
+                  </button>
+                )}
               </div>
               <p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium mb-3">
                 by {book.author}
@@ -304,6 +351,15 @@ export default function Books() {
               <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
                 {book.description}
               </p>
+
+              {/* Show review count */}
+              {bookReviews[book.id] && bookReviews[book.id].length > 0 && (
+                <div className="mt-3 text-xs text-gray-500">
+                  💬 {bookReviews[book.id].length} review
+                  {bookReviews[book.id].length !== 1 ? "s" : ""}
+                </div>
+              )}
+
               <div className="mt-4 flex items-center justify-between gap-3">
                 {user ? (
                   <div className="flex items-center gap-2">
@@ -386,6 +442,50 @@ export default function Books() {
                     Save
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete confirmation modal */}
+      <AnimatePresence>
+        {deleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            onClick={() => setDeleteConfirm(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-3">
+                Delete Book?
+              </h3>
+              <p className="text-gray-700 dark:text-gray-300 mb-6">
+                Are you sure you want to delete this book? This action cannot be
+                undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => deleteBook(deleteConfirm)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                >
+                  Delete
+                </button>
               </div>
             </motion.div>
           </motion.div>
