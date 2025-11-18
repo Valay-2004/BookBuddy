@@ -75,6 +75,8 @@ export default function Books() {
   const [reviewText, setReviewText] = useState("");
   const [bookReviews, setBookReviews] = useState({}); // Store reviews by book ID
   const [deleteConfirm, setDeleteConfirm] = useState(null); // For delete confirmation
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
 
   const openReview = (bookId) => {
     setReviewOpenFor(bookId);
@@ -105,8 +107,9 @@ export default function Books() {
   }, [books]);
 
   const submitReview = async (bookId) => {
+    if (!reviewRating) return toast.error("Please select a rating");
+    setIsReviewSubmitting(true);
     try {
-      if (!reviewRating) return toast.error("Please select a rating");
       await API.post(`/books/${bookId}/reviews`, {
         rating: reviewRating,
         reviewText,
@@ -120,11 +123,14 @@ export default function Books() {
     } catch (err) {
       console.error(err);
       toast.error("Failed to save review");
+    } finally {
+      setIsReviewSubmitting(false);
     }
   };
 
   // Delete book with confirmation
   const deleteBook = async (bookId) => {
+    setIsDeleting(true);
     try {
       await API.delete(`/books/${bookId}`);
       toast.success("Book deleted");
@@ -133,6 +139,8 @@ export default function Books() {
     } catch (err) {
       console.error(err);
       toast.error("Failed to delete book");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -437,9 +445,10 @@ export default function Books() {
                   </button>
                   <button
                     onClick={() => submitReview(reviewOpenFor)}
-                    className="px-4 py-1 bg-green-600 text-white rounded-md"
+                    disabled={isReviewSubmitting}
+                    className="px-4 py-1 bg-green-600 text-white rounded-md disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    Save
+                    {isReviewSubmitting ? "Saving..." : "Save"}
                   </button>
                 </div>
               </div>
@@ -482,9 +491,10 @@ export default function Books() {
                 </button>
                 <button
                   onClick={() => deleteBook(deleteConfirm)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                  disabled={isDeleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  Delete
+                  {isDeleting ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </motion.div>
@@ -504,7 +514,7 @@ export default function Books() {
                 return np;
               });
             }}
-            className="px-3 py-1 rounded-md border disabled:opacity-50"
+            className="px-3 py-1 rounded-md border disabled:opacity-50 cursor-pointer"
           >
             Prev
           </button>
@@ -520,7 +530,7 @@ export default function Books() {
                 return np;
               });
             }}
-            className="px-3 py-1 rounded-md border disabled:opacity-50"
+            className="px-3 py-1 rounded-md border disabled:opacity-50 cursor-pointer"
           >
             Next
           </button>
