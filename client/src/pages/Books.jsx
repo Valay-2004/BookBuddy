@@ -77,6 +77,7 @@ export default function Books() {
   const [deleteConfirm, setDeleteConfirm] = useState(null); // For delete confirmation
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
+  const [viewReviewsFor, setViewReviewsFor] = useState(null);
 
   const openReview = (bookId) => {
     setReviewOpenFor(bookId);
@@ -105,6 +106,13 @@ export default function Books() {
       }
     });
   }, [books]);
+
+  // When user opens the public reviews modal, ensure reviews are fetched
+  useEffect(() => {
+    if (viewReviewsFor && !bookReviews[viewReviewsFor]) {
+      fetchBookReviews(viewReviewsFor);
+    }
+  }, [viewReviewsFor]);
 
   const submitReview = async (bookId) => {
     if (!reviewRating) return toast.error("Please select a rating");
@@ -338,7 +346,10 @@ export default function Books() {
                 y: -5,
                 transition: { duration: 0.2 },
               }}
-              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-xl border border-gray-100 dark:border-gray-700 transition-all duration-300"
+              onClick={() => {
+                setViewReviewsFor(book.id);
+              }}
+              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-xl border border-gray-100 dark:border-gray-700 transition-all duration-300 cursor-pointer"
             >
               <div className="flex justify-between items-start mb-3">
                 <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 leading-tight">
@@ -346,7 +357,10 @@ export default function Books() {
                 </h3>
                 {user?.role === "admin" && (
                   <button
-                    onClick={() => setDeleteConfirm(book.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteConfirm(book.id);
+                    }}
                     className="text-red-600 hover:text-red-800 text-sm font-medium"
                   >
                     ✕
@@ -360,23 +374,22 @@ export default function Books() {
                 {book.description}
               </p>
 
-              {/* Show review count */}
-              {bookReviews[book.id] && bookReviews[book.id].length > 0 && (
-                <div className="mt-3 text-xs text-gray-500">
-                  💬 {bookReviews[book.id].length} review
-                  {bookReviews[book.id].length !== 1 ? "s" : ""}
-                </div>
-              )}
+              {/* Always show review count (0 if none) */}
+              <div className="mt-3 text-xs text-gray-500">
+                💬 {bookReviews[book.id]?.length ?? 0} review
+                {(bookReviews[book.id]?.length ?? 0) !== 1 ? "s" : ""}
+              </div>
 
               <div className="mt-4 flex items-center justify-between gap-3">
                 {user ? (
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() =>
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setReviewOpenFor((prev) =>
                           prev === book.id ? null : book.id
-                        )
-                      }
+                        );
+                      }}
                       className="text-sm px-3 py-1 bg-indigo-600 text-white rounded-md cursor-pointer"
                     >
                       {reviewOpenFor === book.id
@@ -451,6 +464,67 @@ export default function Books() {
                     {isReviewSubmitting ? "Saving..." : "Save"}
                   </button>
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Public view reviews modal - visible to everyone */}
+      <AnimatePresence>
+        {viewReviewsFor && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+            onClick={() => setViewReviewsFor(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.12 }}
+              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-medium">Reviews</h3>
+                <button
+                  onClick={() => setViewReviewsFor(null)}
+                  className="text-sm text-gray-500"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {(bookReviews[viewReviewsFor] || []).length === 0 ? (
+                  <div className="text-sm text-gray-500">No reviews yet</div>
+                ) : (
+                  (bookReviews[viewReviewsFor] || []).map((r, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 rounded-md bg-gray-50 dark:bg-gray-900"
+                    >
+                      <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
+                        <div className="font-medium">
+                          {r.userName || r.user || "Anonymous"}
+                        </div>
+                        <div className="text-yellow-500">{r.rating} ⭐</div>
+                      </div>
+                      {r.reviewText ? (
+                        <div className="text-sm text-gray-700 dark:text-gray-200">
+                          {r.reviewText}
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500">
+                          (No review text)
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
               </div>
             </motion.div>
           </motion.div>
