@@ -3,6 +3,10 @@ import { useEffect, useState, useRef } from "react";
 import API from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
+import BookCard from "../components/BookCard";
+import ReviewModal from "../components/modals/ReviewModal";
+import ViewReviewsModal from "../components/modals/ViewReviewsModal";
+import DeleteConfirmModal from "../components/modals/DeleteConfirmModal";
 
 export default function Books() {
   const [books, setBooks] = useState([]);
@@ -186,27 +190,24 @@ export default function Books() {
         }}
       />
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-3xl font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
-          📚 Books
-          <motion.span
-            className="text-sm font-normal text-gray-500 dark:text-gray-400"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            <strong>({books.length})</strong>
-          </motion.span>
-        </h2>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-10">
+        <div>
+          <h2 className="text-4xl sm:text-5xl font-black bg-linear-to-r from-emerald-500 to-teal-700 bg-clip-text text-transparent mb-2">
+            📚 Library
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
+            Discover and review amazing books
+          </p>
+        </div>
 
         {user?.role === "admin" && (
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowForm(!showForm)}
-            className="px-4 py-2 rounded-lg font-medium transition-all duration-200"
+            className="px-6 py-3 rounded-xl font-semibold text-white bg-linear-to-r from-purple-600 to-pink-600 hover:shadow-lg transition-all duration-200 w-fit"
           >
-            {showForm ? "Cancel" : "➕ Add Book"}
+            {showForm ? "✕ Cancel" : "✨ Add Book"}
           </motion.button>
         )}
       </div>
@@ -223,13 +224,17 @@ export default function Books() {
           >
             <motion.form
               onSubmit={handleAddBook}
-              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700"
+              className="bg-linear-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-8 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50"
             >
-              <div className="space-y-4">
+              <h3 className="text-2xl font-bold mb-6 bg-linear-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                Add New Book
+              </h3>
+
+              <div className="space-y-5">
                 <div>
                   <label
                     htmlFor="title"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
                   >
                     Title *
                   </label>
@@ -239,7 +244,7 @@ export default function Books() {
                     placeholder="Enter book title"
                     value={newBook.title}
                     onChange={(e) => handleInputChange("title", e.target.value)}
-                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                     required
                   />
                 </div>
@@ -247,7 +252,7 @@ export default function Books() {
                 <div>
                   <label
                     htmlFor="author"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
                   >
                     Author *
                   </label>
@@ -259,7 +264,7 @@ export default function Books() {
                     onChange={(e) =>
                       handleInputChange("author", e.target.value)
                     }
-                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
                     required
                   />
                 </div>
@@ -267,7 +272,7 @@ export default function Books() {
                 <div>
                   <label
                     htmlFor="description"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                    className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
                   >
                     Description *
                   </label>
@@ -278,19 +283,19 @@ export default function Books() {
                     onChange={(e) =>
                       handleInputChange("description", e.target.value)
                     }
-                    rows={3}
-                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none"
+                    rows={4}
+                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition resize-none"
                     required
                   />
                 </div>
 
-                <div className="flex justify-end gap-3 pt-2">
+                <div className="flex justify-end gap-3 pt-4">
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="button"
                     onClick={() => setShowForm(false)}
-                    className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition"
+                    className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition font-medium"
                   >
                     Cancel
                   </motion.button>
@@ -299,7 +304,7 @@ export default function Books() {
                     whileTap={{ scale: 0.98 }}
                     type="submit"
                     disabled={isSubmitting}
-                    className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
+                    className="px-8 py-2 bg-linear-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
                   >
                     {isSubmitting ? "Adding..." : "Add Book"}
                   </motion.button>
@@ -313,21 +318,32 @@ export default function Books() {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(6)].map((_, i) => (
-            <SkeletonCard key={i} />
+            <motion.div
+              key={i}
+              initial={{ opacity: 0.5 }}
+              animate={{ opacity: 1 }}
+              transition={{
+                duration: 0.6,
+                repeat: Infinity,
+                repeatType: "reverse",
+              }}
+              className="bg-linear-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 p-6 rounded-2xl shadow-md h-64"
+            />
           ))}
         </div>
       ) : books.length === 0 ? (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-20"
         >
-          <div className="text-5xl mb-4">📚</div>
-          <h3 className="text-xl font-medium text-gray-700 dark:text-gray-300">
-            No books found
+          <div className="text-8xl mb-4 opacity-20">📚</div>
+          <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+            No books yet
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Add your first book to get started
+          <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+            Start by adding your first book to the library. Click the "Add Book"
+            button to get started.
           </p>
         </motion.div>
       ) : (
@@ -335,251 +351,61 @@ export default function Books() {
           layout
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          {books.map((book, i) => (
-            <motion.div
+          {books.map((book) => (
+            <BookCard
               key={book.id}
-              layout
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 30 }}
-              whileHover={{
-                y: -5,
-                transition: { duration: 0.2 },
-              }}
-              onClick={() => {
-                setViewReviewsFor(book.id);
-              }}
-              className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md hover:shadow-xl border border-gray-100 dark:border-gray-700 transition-all duration-300 cursor-pointer"
-            >
-              <div className="flex justify-between items-start mb-3">
-                <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 leading-tight">
-                  {book.title}
-                </h3>
-                {user?.role === "admin" && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteConfirm(book.id);
-                    }}
-                    className="text-red-600 hover:text-red-800 text-sm font-medium"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-              <p className="text-sm text-indigo-600 dark:text-indigo-400 font-medium mb-3">
-                by {book.author}
-              </p>
-              <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed">
-                {book.description}
-              </p>
-
-              {/* Always show review count (0 if none) */}
-              <div className="mt-3 text-xs text-gray-500">
-                💬 {bookReviews[book.id]?.length ?? 0} review
-                {(bookReviews[book.id]?.length ?? 0) !== 1 ? "s" : ""}
-              </div>
-
-              <div className="mt-4 flex items-center justify-between gap-3">
-                {user ? (
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setReviewOpenFor((prev) =>
-                          prev === book.id ? null : book.id
-                        );
-                      }}
-                      className="text-sm px-3 py-1 bg-indigo-600 text-white rounded-md cursor-pointer"
-                    >
-                      {reviewOpenFor === book.id
-                        ? "Close"
-                        : "Add / Edit Review"}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-500">Login to review</div>
-                )}
-              </div>
-            </motion.div>
+              book={book}
+              user={user}
+              bookReviewsLen={bookReviews[book.id]?.length ?? 0}
+              reviewOpenFor={reviewOpenFor}
+              onOpenReviewClick={(id) =>
+                setReviewOpenFor((prev) => (prev === id ? null : id))
+              }
+              onDeleteClick={(id) => setDeleteConfirm(id)}
+              onCardClick={(id) => setViewReviewsFor(id)}
+            />
           ))}
         </motion.div>
       )}
 
-      {/* Review modal (fixed) */}
-      <AnimatePresence>
-        {reviewOpenFor && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            onClick={() => setReviewOpenFor(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.12 }}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-lg mx-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="text-lg font-medium mb-3">Add / Edit Review</h3>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm">Rating:</label>
-                  <select
-                    value={reviewRating}
-                    onChange={(e) => setReviewRating(Number(e.target.value))}
-                    className="p-2 rounded-md bg-white dark:bg-gray-700"
-                  >
-                    {[5, 4, 3, 2, 1].map((r) => (
-                      <option key={r} value={r}>
-                        {r} ⭐
-                      </option>
-                    ))}
-                  </select>
-                </div>
+      {/* Review modal (extracted component) */}
+      <ReviewModal
+        isOpen={reviewOpenFor !== null}
+        bookId={reviewOpenFor}
+        rating={reviewRating}
+        reviewText={reviewText}
+        isSubmitting={isReviewSubmitting}
+        onRatingChange={(val) => setReviewRating(val)}
+        onTextChange={(val) => setReviewText(val)}
+        onSubmit={() => submitReview(reviewOpenFor)}
+        onClose={() => setReviewOpenFor(null)}
+      />
 
-                <textarea
-                  value={reviewText}
-                  onChange={(e) => setReviewText(e.target.value)}
-                  rows={4}
-                  className="w-full p-3 rounded-md bg-white dark:bg-gray-800"
-                  placeholder="Write your review (optional)"
-                />
+      {/* Public view reviews modal (extracted component) */}
+      <ViewReviewsModal
+        isOpen={viewReviewsFor !== null}
+        reviews={bookReviews[viewReviewsFor] || []}
+        onClose={() => setViewReviewsFor(null)}
+      />
 
-                <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => setReviewOpenFor(null)}
-                    className="px-3 py-1 rounded-md border"
-                  >
-                    Close
-                  </button>
-                  <button
-                    onClick={() => submitReview(reviewOpenFor)}
-                    disabled={isReviewSubmitting}
-                    className="px-4 py-1 bg-green-600 text-white rounded-md disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {isReviewSubmitting ? "Saving..." : "Save"}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Public view reviews modal - visible to everyone */}
-      <AnimatePresence>
-        {viewReviewsFor && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            onClick={() => setViewReviewsFor(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.12 }}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-lg font-medium">Reviews</h3>
-                <button
-                  onClick={() => setViewReviewsFor(null)}
-                  className="text-sm text-gray-500"
-                >
-                  Close
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {(bookReviews[viewReviewsFor] || []).length === 0 ? (
-                  <div className="text-sm text-gray-500">No reviews yet</div>
-                ) : (
-                  (bookReviews[viewReviewsFor] || []).map((r, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 rounded-md bg-gray-50 dark:bg-gray-900"
-                    >
-                      <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
-                        <div className="font-medium">
-                          {r.userName || r.user || "Anonymous"}
-                        </div>
-                        <div className="text-yellow-500">{r.rating} ⭐</div>
-                      </div>
-                      {r.reviewText ? (
-                        <div className="text-sm text-gray-700 dark:text-gray-200">
-                          {r.reviewText}
-                        </div>
-                      ) : (
-                        <div className="text-sm text-gray-500">
-                          (No review text)
-                        </div>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Delete confirmation modal */}
-      <AnimatePresence>
-        {deleteConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-            onClick={() => setDeleteConfirm(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              transition={{ duration: 0.12 }}
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md mx-4"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-3">
-                Delete Book?
-              </h3>
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
-                Are you sure you want to delete this book? This action cannot be
-                undone.
-              </p>
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setDeleteConfirm(null)}
-                  className="px-4 py-2 rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => deleteBook(deleteConfirm)}
-                  disabled={isDeleting}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Delete confirmation modal (extracted component) */}
+      <DeleteConfirmModal
+        isOpen={deleteConfirm !== null}
+        isDeleting={isDeleting}
+        onConfirm={() => deleteBook(deleteConfirm)}
+        onCancel={() => setDeleteConfirm(null)}
+      />
 
       {/* Pagination controls */}
       {!loading && totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3 mt-6">
-          <button
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center justify-center gap-3 mt-12 pt-8 border-t border-gray-200 dark:border-gray-700"
+        >
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             disabled={page <= 1}
             onClick={() => {
               setPage((p) => {
@@ -588,14 +414,16 @@ export default function Books() {
                 return np;
               });
             }}
-            className="px-3 py-1 rounded-md border disabled:opacity-50 cursor-pointer"
+            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed font-medium transition"
           >
-            Prev
-          </button>
-          <div className="text-sm">
-            Page {page} of {totalPages}
+            ← Prev
+          </motion.button>
+          <div className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 font-semibold text-gray-800 dark:text-gray-200">
+            {page} / {totalPages}
           </div>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             disabled={page >= totalPages}
             onClick={() => {
               setPage((p) => {
@@ -604,11 +432,11 @@ export default function Books() {
                 return np;
               });
             }}
-            className="px-3 py-1 rounded-md border disabled:opacity-50 cursor-pointer"
+            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed font-medium transition"
           >
-            Next
-          </button>
-        </div>
+            Next →
+          </motion.button>
+        </motion.div>
       )}
     </div>
   );
