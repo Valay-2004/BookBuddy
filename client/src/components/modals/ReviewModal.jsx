@@ -1,6 +1,5 @@
 import React from "react";
-import { motion } from "framer-motion";
-import { AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 
 /**
  * ReviewModal - modal for adding/editing a review for a book.

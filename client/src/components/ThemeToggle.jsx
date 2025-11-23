@@ -1,25 +1,25 @@
-import { useState } from "react";
-import { initializeTheme, applyTheme } from "../utils/theme";
+import React from "react";
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "../context/ThemeContext";
+import { motion } from "motion/react";
 
 const ThemeToggle = () => {
-  const [theme, setTheme] = useState(() => initializeTheme());
-
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    applyTheme(newTheme);
-  };
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <section>
-      <button
-        onClick={toggleTheme}
-        aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-        className="bg-white text-indigo-600 dark:bg-indigo-700 dark:text-white px-3 py-1 rounded-md text-sm font-medium hover:bg-indigo-100 dark:hover:bg-indigo-600 transition-colors"
-      >
-        {theme === "dark" ? <span>🌞 Light</span> : <span>🌚 Dark</span>}
-      </button>
-    </section>
+    <motion.button
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      onClick={toggleTheme}
+      className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors border border-transparent dark:border-gray-700"
+      aria-label="Toggle Theme"
+    >
+      {theme === "dark" ? (
+        <Sun className="w-5 h-5" />
+      ) : (
+        <Moon className="w-5 h-5" />
+      )}
+    </motion.button>
   );
 };
 
