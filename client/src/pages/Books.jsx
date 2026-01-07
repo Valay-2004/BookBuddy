@@ -1,443 +1,243 @@
-import { motion, AnimatePresence } from "framer-motion";
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import toast, { Toaster } from "react-hot-toast";
+import { Plus } from "lucide-react";
+
 import API from "../services/api";
 import { useAuth } from "../context/AuthContext";
-import toast, { Toaster } from "react-hot-toast";
-import BookCard from "../components/BookCard";
-import ReviewModal from "../components/modals/ReviewModal";
+
+// Components/modals
+import BookGrid from "../components/BookGrid";
+import AddBookForm from "../components/forms/AddBookForm";
+import ReviewModal from "../components/modals/ReviewModal"; // Use your existing path if different
 import ViewReviewsModal from "../components/modals/ViewReviewsModal";
 import DeleteConfirmModal from "../components/modals/DeleteConfirmModal";
 
 export default function Books() {
-  const [books, setBooks] = useState([]);
-  const [page, setPage] = useState(1);
-  const [limit] = useState(6);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [newBook, setNewBook] = useState({
-    title: "",
-    author: "",
-    description: "",
-  });
   const { user, token } = useAuth();
-  const formRef = useRef(null);
 
-  // Focus first input when form appears
-  useEffect(() => {
-    if (showForm && formRef.current) {
-      const firstInput = formRef.current.querySelector("input");
-      firstInput?.focus();
-    }
-  }, [showForm]);
+  // Data States
+  const [books, setBooks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 8; // Increased limit for modern screens
 
-  const fetchBooks = async (p = page) => {
+  // UI States
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Modal States
+  const [reviewOpenFor, setReviewOpenFor] = useState(null);
+  const [viewReviewsFor, setViewReviewsFor] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
+
+  // Review Data
+  const [bookReviews, setBookReviews] = useState({});
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
+
+  // --- API Handlers ---
+
+  const fetchBooks = useCallback(async (pageNum) => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await API.get(`/books?page=${p}&limit=${limit}`);
-      const data = res.data;
-      setBooks(Array.isArray(data.books) ? data.books : []);
-      setTotal(data.total || 0);
+      const { data } = await API.get(`/books?page=${pageNum}&limit=${limit}`);
+      setBooks(data.books || []);
       setTotalPages(data.totalPages || 1);
     } catch (err) {
-      console.error("Error fetching books:", err);
-      toast.error("Failed to load books");
+      toast.error("Failed to load library");
     } finally {
-      setLoading(false);
+      // Small delay to prevent flicker on fast connections, ensure skeleton shows briefly
+      setTimeout(() => setLoading(false), 300);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchBooks(page);
-  }, []);
+  }, [page, fetchBooks]);
 
-  const handleAddBook = async (e) => {
-    e.preventDefault();
+  const fetchBookReviews = async (bookId) => {
+    if (bookReviews[bookId]) return; // Cache check
+    try {
+      const { data } = await API.get(`/books/${bookId}/reviews`);
+      setBookReviews((prev) => ({ ...prev, [bookId]: data || [] }));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Prefetch reviews for visible books
+  useEffect(() => {
+    books.forEach((book) => fetchBookReviews(book.id));
+  }, [books]);
+
+  const handleAddBook = async (bookData) => {
     setIsSubmitting(true);
     try {
-      const res = await API.post("/books", newBook, {
+      await API.post("/books", bookData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Book added successfully!");
-      await fetchBooks(1); // Refresh to first page to show new book
+      setShowAddForm(false);
+      fetchBooks(1);
       setPage(1);
-      setShowForm(false);
-      setNewBook({ title: "", author: "", description: "" });
     } catch (err) {
       toast.error("Failed to add book");
-      console.error(err);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Review UI state
-  const [reviewOpenFor, setReviewOpenFor] = useState(null);
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewText, setReviewText] = useState("");
-  const [bookReviews, setBookReviews] = useState({}); // Store reviews by book ID
-  const [deleteConfirm, setDeleteConfirm] = useState(null); // For delete confirmation
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
-  const [viewReviewsFor, setViewReviewsFor] = useState(null);
-
-  const openReview = (bookId) => {
-    setReviewOpenFor(bookId);
-    setReviewRating(5);
-    setReviewText("");
-  };
-
-  // Fetch reviews for a specific book
-  const fetchBookReviews = async (bookId) => {
+  const handleDelete = async () => {
+    if (!deleteConfirmId) return;
     try {
-      const res = await API.get(`/books/${bookId}/reviews`);
-      setBookReviews((prev) => ({
-        ...prev,
-        [bookId]: Array.isArray(res.data) ? res.data : [],
-      }));
+      await API.delete(`/books/${deleteConfirmId}`);
+      toast.success("Book deleted");
+      fetchBooks(page);
     } catch (err) {
-      console.error("Error fetching reviews:", err);
+      toast.error("Failed to delete");
+    } finally {
+      setDeleteConfirmId(null);
     }
   };
 
-  // Fetch reviews for all books on component mount
-  useEffect(() => {
-    books.forEach((book) => {
-      if (!bookReviews[book.id]) {
-        fetchBookReviews(book.id);
-      }
-    });
-  }, [books]);
-
-  // When user opens the public reviews modal, ensure reviews are fetched
-  useEffect(() => {
-    if (viewReviewsFor && !bookReviews[viewReviewsFor]) {
-      fetchBookReviews(viewReviewsFor);
-    }
-  }, [viewReviewsFor]);
-
-  const submitReview = async (bookId) => {
-    if (!reviewRating) return toast.error("Please select a rating");
+  const handleReviewSubmit = async () => {
     setIsReviewSubmitting(true);
     try {
-      await API.post(`/books/${bookId}/reviews`, {
+      await API.post(`/books/${reviewOpenFor}/reviews`, {
         rating: reviewRating,
         reviewText,
       });
       toast.success("Review saved");
+
+      // Update local cache immediately
+      const { data } = await API.get(`/books/${reviewOpenFor}/reviews`);
+      setBookReviews((prev) => ({ ...prev, [reviewOpenFor]: data }));
+
       setReviewOpenFor(null);
-      // Refresh reviews for this book
-      await fetchBookReviews(bookId);
-      // Refresh books list
-      await fetchBooks(page);
     } catch (err) {
-      console.error(err);
       toast.error("Failed to save review");
     } finally {
       setIsReviewSubmitting(false);
     }
   };
 
-  // Delete book with confirmation
-  const deleteBook = async (bookId) => {
-    setIsDeleting(true);
-    try {
-      await API.delete(`/books/${bookId}`);
-      toast.success("Book deleted");
-      await fetchBooks(page);
-      setDeleteConfirm(null);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to delete book");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleInputChange = (field, value) => {
-    setNewBook((prev) => ({ ...prev, [field]: value }));
-  };
-
-  // Skeleton loader component
-  const SkeletonCard = () => (
-    <motion.div
-      className="bg-white dark:bg-gray-800 p-5 rounded-xl shadow-md"
-      initial={{ opacity: 0.7 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
-    >
-      <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded mb-3 w-3/4"></div>
-      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded mb-4 w-1/2"></div>
-      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded mb-2 w-full"></div>
-      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
-    </motion.div>
-  );
+  // --- Render ---
 
   return (
-    <div className="space-y-6 relative max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 min-h-screen">
       <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: {
-            background: "#333",
-            color: "#fff",
-            borderRadius: "8px",
-            padding: "12px 16px",
-          },
-        }}
+        position="bottom-right"
+        toastOptions={{ className: "dark:bg-gray-800 dark:text-white" }}
       />
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 mb-10">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h2 className="text-4xl sm:text-5xl font-black bg-linear-to-r from-emerald-500 to-teal-700 bg-clip-text text-transparent mb-2">
-            📚 Library
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">
-            Discover and review amazing books
+          <h1 className="text-4xl font-black tracking-tight text-gray-900 dark:text-white">
+            Library
+          </h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            Manage and review your collection.
           </p>
         </div>
 
         {user?.role === "admin" && (
           <motion.button
-            whileHover={{ scale: 1.05 }}
+            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setShowForm(!showForm)}
-            className="px-6 py-3 rounded-xl font-semibold text-white bg-linear-to-r from-purple-600 to-pink-600 hover:shadow-lg transition-all duration-200 w-fit"
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg shadow-indigo-500/20 transition-all"
           >
-            {showForm ? "✕ Cancel" : "✨ Add Book"}
+            {showAddForm ? (
+              "Close Form"
+            ) : (
+              <>
+                <Plus size={20} /> Add Book
+              </>
+            )}
           </motion.button>
         )}
       </div>
 
       <AnimatePresence>
-        {showForm && (
-          <motion.div
-            ref={formRef}
-            initial={{ opacity: 0, height: 0, y: -20 }}
-            animate={{ opacity: 1, height: "auto", y: 0 }}
-            exit={{ opacity: 0, height: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="overflow-hidden"
-          >
-            <motion.form
-              onSubmit={handleAddBook}
-              className="bg-linear-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 p-8 rounded-2xl shadow-lg border border-gray-200/50 dark:border-gray-700/50"
-            >
-              <h3 className="text-2xl font-bold mb-6 bg-linear-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Add New Book
-              </h3>
-
-              <div className="space-y-5">
-                <div>
-                  <label
-                    htmlFor="title"
-                    className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Title *
-                  </label>
-                  <input
-                    id="title"
-                    type="text"
-                    placeholder="Enter book title"
-                    value={newBook.title}
-                    onChange={(e) => handleInputChange("title", e.target.value)}
-                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="author"
-                    className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Author *
-                  </label>
-                  <input
-                    id="author"
-                    type="text"
-                    placeholder="Enter author name"
-                    value={newBook.author}
-                    onChange={(e) =>
-                      handleInputChange("author", e.target.value)
-                    }
-                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="description"
-                    className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
-                  >
-                    Description *
-                  </label>
-                  <textarea
-                    id="description"
-                    placeholder="Enter book description"
-                    value={newBook.description}
-                    onChange={(e) =>
-                      handleInputChange("description", e.target.value)
-                    }
-                    rows={4}
-                    className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent transition resize-none"
-                    required
-                  />
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="button"
-                    onClick={() => setShowForm(false)}
-                    className="px-6 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition font-medium"
-                  >
-                    Cancel
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="px-8 py-2 bg-linear-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition"
-                  >
-                    {isSubmitting ? "Adding..." : "Add Book"}
-                  </motion.button>
-                </div>
-              </div>
-            </motion.form>
-          </motion.div>
+        {showAddForm && (
+          <AddBookForm
+            onAdd={handleAddBook}
+            onCancel={() => setShowAddForm(false)}
+            isSubmitting={isSubmitting}
+          />
         )}
       </AnimatePresence>
 
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0.5 }}
-              animate={{ opacity: 1 }}
-              transition={{
-                duration: 0.6,
-                repeat: Infinity,
-                repeatType: "reverse",
-              }}
-              className="bg-linear-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 p-6 rounded-2xl shadow-md h-64"
-            />
-          ))}
+      {/* Main Grid */}
+      <BookGrid
+        books={books}
+        isLoading={loading}
+        user={user}
+        bookReviews={bookReviews}
+        reviewOpenFor={reviewOpenFor}
+        onOpenReview={(id) => {
+          setReviewOpenFor(id);
+          setReviewRating(5);
+          setReviewText("");
+        }}
+        onDelete={setDeleteConfirmId}
+        onViewReviews={(id) => {
+          setViewReviewsFor(id);
+          fetchBookReviews(id);
+        }}
+      />
+
+      {/* Pagination */}
+      {!loading && totalPages > 1 && (
+        <div className="flex justify-center gap-4 mt-12">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors text-gray-700 dark:text-gray-300"
+          >
+            Previous
+          </button>
+          <span className="px-4 py-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-mono">
+            {page} / {totalPages}
+          </span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50 transition-colors text-gray-700 dark:text-gray-300"
+          >
+            Next
+          </button>
         </div>
-      ) : books.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-20"
-        >
-          <div className="text-8xl mb-4 opacity-20">📚</div>
-          <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
-            No books yet
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-            Start by adding your first book to the library. Click the "Add Book"
-            button to get started.
-          </p>
-        </motion.div>
-      ) : (
-        <motion.div
-          layout
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {books.map((book) => (
-            <BookCard
-              key={book.id}
-              book={book}
-              user={user}
-              bookReviewsLen={bookReviews[book.id]?.length ?? 0}
-              reviewOpenFor={reviewOpenFor}
-              onOpenReviewClick={(id) =>
-                setReviewOpenFor((prev) => (prev === id ? null : id))
-              }
-              onDeleteClick={(id) => setDeleteConfirm(id)}
-              onCardClick={(id) => setViewReviewsFor(id)}
-            />
-          ))}
-        </motion.div>
       )}
 
-      {/* Review modal (extracted component) */}
+      {/* Modals */}
       <ReviewModal
-        isOpen={reviewOpenFor !== null}
-        bookId={reviewOpenFor}
+        isOpen={!!reviewOpenFor}
         rating={reviewRating}
         reviewText={reviewText}
         isSubmitting={isReviewSubmitting}
-        onRatingChange={(val) => setReviewRating(val)}
-        onTextChange={(val) => setReviewText(val)}
-        onSubmit={() => submitReview(reviewOpenFor)}
+        onRatingChange={setReviewRating}
+        onTextChange={setReviewText}
+        onSubmit={handleReviewSubmit}
         onClose={() => setReviewOpenFor(null)}
       />
 
-      {/* Public view reviews modal (extracted component) */}
       <ViewReviewsModal
-        isOpen={viewReviewsFor !== null}
-        reviews={bookReviews[viewReviewsFor] || []}
+        isOpen={!!viewReviewsFor}
+        reviews={bookReviews[viewReviewsFor]}
         onClose={() => setViewReviewsFor(null)}
       />
 
-      {/* Delete confirmation modal (extracted component) */}
       <DeleteConfirmModal
-        isOpen={deleteConfirm !== null}
-        isDeleting={isDeleting}
-        onConfirm={() => deleteBook(deleteConfirm)}
-        onCancel={() => setDeleteConfirm(null)}
+        isOpen={!!deleteConfirmId}
+        isDeleting={loading} // Reusing loading state for delete spinner
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteConfirmId(null)}
       />
-
-      {/* Pagination controls */}
-      {!loading && totalPages > 1 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex items-center justify-center gap-3 mt-12 pt-8 border-t border-gray-200 dark:border-gray-700"
-        >
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            disabled={page <= 1}
-            onClick={() => {
-              setPage((p) => {
-                const np = p - 1;
-                fetchBooks(np);
-                return np;
-              });
-            }}
-            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed font-medium transition"
-          >
-            ← Prev
-          </motion.button>
-          <div className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-800 font-semibold text-gray-800 dark:text-gray-200">
-            {page} / {totalPages}
-          </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            disabled={page >= totalPages}
-            onClick={() => {
-              setPage((p) => {
-                const np = p + 1;
-                fetchBooks(np);
-                return np;
-              });
-            }}
-            className="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed font-medium transition"
-          >
-            Next →
-          </motion.button>
-        </motion.div>
-      )}
     </div>
   );
 }

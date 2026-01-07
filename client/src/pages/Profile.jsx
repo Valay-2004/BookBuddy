@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import API from "../services/api";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "motion/react";
 import { User, Mail, Star, BookOpen, MessageCircle } from "lucide-react";
 
 export default function Profile() {

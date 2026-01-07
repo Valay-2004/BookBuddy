@@ -1,26 +1,19 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import API from "../services/api";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "motion/react";
+import { User, Mail, Lock, MapPin, Loader2, ArrowRight } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import API from "../services/api";
 
 export default function Signup() {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
+    address: "",
   });
-
-  // Redirect logged-in users away from signup page
-  useEffect(() => {
-    if (user) {
-      navigate("/profile", { replace: true });
-    }
-  }, [user, navigate]);
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -30,115 +23,154 @@ export default function Signup() {
     e.preventDefault();
     setLoading(true);
     try {
-      // Only send the fields the server expects
-      const { name, email, password } = formData;
-      const res = await API.post("/auth/signup", { name, email, password });
-      toast.success("Signup successful! Please log in.");
+      await API.post("/auth/signup", formData);
+      toast.success("Account created! Redirecting...");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
-      console.error(err);
-      toast.error(err.response?.data?.error || "Signup failed!");
+      toast.error(err.response?.data?.error || "Signup failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <motion.div
-      className="flex items-center justify-center min-h-screen px-4"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-    >
+    <div className="min-h-[calc(100vh-64px)] grid grid-cols-1 lg:grid-cols-2">
       <Toaster position="top-right" />
 
-      <motion.form
-        onSubmit={handleSubmit}
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md bg-white dark:bg-gray-800 shadow-xl rounded-xl p-8 border border-gray-200 dark:border-gray-700"
-      >
-        <h2 className="text-2xl font-bold text-center text-indigo-600 dark:text-indigo-400 mb-6">
-          Create an Account
-        </h2>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Name
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-              required
-              placeholder="Your full name"
-              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-            />
+      {/* Left Side: Form */}
+      <div className="flex items-center justify-center p-8 bg-zinc-50 dark:bg-zinc-950">
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          className="w-full max-w-md space-y-6"
+        >
+          <div className="text-center lg:text-left">
+            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
+              Create an account
+            </h2>
+            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+              Join our community of book lovers today.
+            </p>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleChange("email", e.target.value)}
-              required
-              placeholder="you@example.com"
-              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Name */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                Full Name
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-2.5 h-5 w-5 text-zinc-400" />
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => handleChange("name", e.target.value)}
+                  className="input-field !pl-10"
+                  placeholder="John Doe"
+                />
+              </div>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Password
-            </label>
-            <input
-              type="password"
-              value={formData.password}
-              onChange={(e) => handleChange("password", e.target.value)}
-              required
-              placeholder="••••••••"
-              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-            />
-          </div>
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-zinc-400" />
+                <input
+                  type="email"
+                  required
+                  value={formData.email}
+                  onChange={(e) => handleChange("email", e.target.value)}
+                  className="input-field !pl-10"
+                  placeholder="john@example.com"
+                />
+              </div>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Address
-            </label>
-            <textarea
-              rows={2}
-              value={formData.address}
-              onChange={(e) => handleChange("address", e.target.value)}
-              placeholder="Your address (Optional)"
-              className="w-full p-3 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none"
-            />
-          </div>
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-2.5 h-5 w-5 text-zinc-400" />
+                <input
+                  type="password"
+                  required
+                  value={formData.password}
+                  onChange={(e) => handleChange("password", e.target.value)}
+                  className="input-field !pl-10"
+                  placeholder="••••••••"
+                />
+              </div>
+            </div>
 
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-lg shadow-md transition disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {loading ? "Creating Account..." : "Sign Up"}
-          </motion.button>
+            {/* Address */}
+            <div>
+              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
+                Address{" "}
+                <span className="text-zinc-400 font-normal">(Optional)</span>
+              </label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-zinc-400" />
+                <textarea
+                  rows={2}
+                  value={formData.address}
+                  onChange={(e) => handleChange("address", e.target.value)}
+                  className="input-field !pl-10 resize-none"
+                  placeholder="123 Library Lane..."
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-primary w-full flex justify-center items-center gap-2 py-2.5 mt-4"
+            >
+              {loading ? (
+                <Loader2 className="animate-spin h-5 w-5" />
+              ) : (
+                <>
+                  Create Account <ArrowRight size={16} />
+                </>
+              )}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-zinc-500">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="font-semibold text-brand-600 hover:text-brand-500 transition-colors"
+            >
+              Log in
+            </Link>
+          </p>
+        </motion.div>
+      </div>
+
+      {/* Right Side: Brand */}
+      <div className="hidden lg:flex relative bg-zinc-900 items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-black" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl" />
+        <div className="relative z-10 max-w-md text-center px-8">
+          <h3 className="text-2xl font-serif italic text-zinc-200 mb-6">
+            "Reading gives us someplace to go when we have to stay where we
+            are."
+          </h3>
+          <div className="flex items-center justify-center gap-3">
+            <div className="h-px w-8 bg-brand-500" />
+            <p className="text-brand-500 font-medium tracking-widest text-sm uppercase">
+              Mason Cooley
+            </p>
+            <div className="h-px w-8 bg-brand-500" />
+          </div>
         </div>
-
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-4 text-center">
-          Already have an account?{" "}
-          <a
-            href="/login"
-            className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition"
-          >
-            Log in
-          </a>
-        </p>
-      </motion.form>
-    </motion.div>
+      </div>
+    </div>
   );
 }
