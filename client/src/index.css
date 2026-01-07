@@ -1,33 +1,62 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    sans-serif;
+
+  /* The "Brand" Color - A sophisticated, deep Indigo */
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+
+  /* Surfaces - Zinc (Cool Gray) */
+  --color-zinc-50: #fafafa;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-800: #27272a;
+  --color-zinc-900: #18181b;
+  --color-zinc-950: #09090b; /* Deepest dark background */
+}
 
 @layer base {
   html {
-    @apply transition-colors duration-300;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
+
   body {
-    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+    /* Light Mode: Slight off-white for less eye strain */
+    background-color: var(--color-zinc-50);
+    color: var(--color-zinc-900);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Dark Mode: "Obsidian" look (Not pitch black) */
+  :root.dark body {
+    background-color: var(--color-zinc-950);
+    color: var(--color-zinc-100);
   }
 }
 
-/* h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
+/* Global Utilities for that "Glass" feel without cheap blur */
+@layer utilities {
+  .surface-card {
+    @apply bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-sm;
+  }
 
-button {
-  border-radius: 8px;
-  margin-top: 5px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 0;
-  font-family: inherit;
-  background-color: #58e0ff;
-  cursor: pointer;
-  transition: border-color 0.25s;
+  .btn-primary {
+    @apply bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg px-4 py-2 transition-all shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-50 dark:hover:bg-zinc-700 font-medium rounded-lg px-4 py-2 transition-all active:scale-95;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600;
+  }
 }
-button:hover {
-  border-color: #323450;
-} */
