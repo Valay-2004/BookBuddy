@@ -22,5 +22,24 @@ CREATE TABLE IF NOT EXISTS books (
   id SERIAL PRIMARY KEY,
   title VARCHAR(200) NOT NULL,
   author VARCHAR(100) NOT NULL,
-  description TEXT
+  summary TEXT NOT NULL
+);
+
+-- Reading Lists
+CREATE TABLE IF NOT EXISTS reading_lists (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  is_public BOOLEAN DEFAULT true,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Junction table for books in reading lists
+CREATE TABLE IF NOT EXISTS reading_list_books (
+  id SERIAL PRIMARY KEY,
+  reading_list_id INTEGER REFERENCES reading_lists(id) ON DELETE CASCADE,
+  book_id INTEGER REFERENCES books(id) ON DELETE CASCADE,
+  added_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(reading_list_id, book_id)
 );
