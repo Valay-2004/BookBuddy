@@ -22,4 +22,15 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+// Reading Lists API
+export const readingListAPI = {
+  getUserLists: () => API.get("/reading-lists"),
+  createList: (data) => API.post("/reading-lists", data),
+  getList: (id) => API.get(`/reading-lists/${id}`),
+  addBook: (listId, bookId) =>
+    API.post(`/reading-lists/${listId}/books/${bookId}`),
+  removeBook: (listId, bookId) =>
+    API.delete(`/reading-lists/${listId}/books/${bookId}`),
+};
+
 export default API;

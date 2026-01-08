@@ -1,5 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "motion/react";
+import ReactStars from "react-rating-stars-component";
 
 /**
  * ReviewModal - modal for adding/editing a review for a book.
@@ -53,17 +54,14 @@ export default function ReviewModal({
                 <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-fit">
                   Rating:
                 </label>
-                <select
+                <ReactStars
+                  count={5}
                   value={rating}
-                  onChange={(e) => onRatingChange(Number(e.target.value))}
-                  className="flex-1 p-3 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white font-medium focus:ring-2 focus:ring-purple-500 focus:outline-none transition"
-                >
-                  {[5, 4, 3, 2, 1].map((r) => (
-                    <option key={r} value={r}>
-                      {r} ⭐
-                    </option>
-                  ))}
-                </select>
+                  onChange={onRatingChange}
+                  size={24}
+                  isHalf={true}
+                  activeColor="#ffd700"
+                />
               </div>
 
               <div>

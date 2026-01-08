@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import ThemeToggle from "./ThemeToggle";
 import { BookOpen, Library, User, LogOut, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function NavBar() {
   const { user, logout } = useAuth();
@@ -20,24 +21,44 @@ export default function NavBar() {
     }`;
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-xl border-b border-zinc-200 dark:border-zinc-800">
+    <motion.nav
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 300, damping: 30 }}
+      className="sticky top-0 z-50 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-2xl border-b border-zinc-200/50 dark:border-zinc-800/50 shadow-sm"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex justify-between items-center">
         {/* Brand Area */}
         <div className="flex items-center gap-8">
-          <NavLink to="/" className="flex items-center gap-2.5 group">
-            <div className="bg-brand-600 text-white p-1.5 rounded-lg group-hover:bg-brand-700 transition-colors">
-              <BookOpen size={20} strokeWidth={2.5} />
-            </div>
-            <span className="font-bold text-lg tracking-tight text-zinc-900 dark:text-white">
-              BookBuddy
-            </span>
-          </NavLink>
-
-          <div className="hidden md:flex items-center gap-1">
-            <NavLink to="/" className={linkClass}>
-              <Library size={16} />
-              Library
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <NavLink to="/" className="flex items-center gap-2.5 group">
+              <motion.div
+                className="bg-gradient-to-br from-brand-500 to-brand-600 text-white p-2 rounded-xl shadow-lg group-hover:shadow-xl group-hover:from-brand-600 group-hover:to-brand-700 transition-all duration-300"
+                whileHover={{ rotate: 5 }}
+              >
+                <BookOpen size={20} strokeWidth={2.5} />
+              </motion.div>
+              <span className="font-bold text-xl tracking-tight text-zinc-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors duration-300">
+                BookBuddy
+              </span>
             </NavLink>
+          </motion.div>
+
+          <div className="hidden md:flex items-center gap-2">
+            <motion.div whileHover={{ scale: 1.02 }}>
+              <NavLink to="/" className={linkClass}>
+                <Library size={16} />
+                Library
+              </NavLink>
+            </motion.div>
+            {user && (
+              <motion.div whileHover={{ scale: 1.02 }}>
+                <NavLink to="/reading-lists" className={linkClass}>
+                  <BookOpen size={16} />
+                  My Lists
+                </NavLink>
+              </motion.div>
+            )}
           </div>
         </div>
 
@@ -84,6 +105,6 @@ export default function NavBar() {
           )}
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 }

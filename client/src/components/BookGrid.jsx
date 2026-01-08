@@ -62,14 +62,17 @@ export default function BookGrid({
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+      className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6"
     >
       <AnimatePresence mode="popLayout">
-        {books.map((book) => (
+        {books.map((book, index) => (
           <motion.div
             key={book.id}
             variants={itemVariants}
-            layout // This magic prop smooths out grid re-shuffling
+            layout
+            className={`break-inside-avoid ${
+              index % 7 === 0 ? "col-span-2" : ""
+            }`} // Make every 7th card larger for bento effect
           >
             <BookCard
               book={book}

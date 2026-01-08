@@ -130,37 +130,65 @@ export default function Books() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 min-h-screen">
       <Toaster
         position="bottom-right"
-        toastOptions={{ className: "dark:bg-gray-800 dark:text-white" }}
+        toastOptions={{
+          className:
+            "dark:bg-zinc-800 dark:text-white border border-zinc-200 dark:border-zinc-700",
+          style: {
+            background: "var(--color-zinc-900)",
+            color: "var(--color-zinc-100)",
+          },
+        }}
       />
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-12"
+      >
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-gray-900 dark:text-white">
+          <motion.h1
+            className="text-5xl font-black tracking-tight bg-gradient-to-r from-zinc-900 via-brand-700 to-zinc-900 dark:from-zinc-100 dark:via-brand-300 dark:to-zinc-100 bg-clip-text text-transparent"
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.2, duration: 0.8 }}
+          >
             Library
-          </h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">
-            Manage and review your collection.
-          </p>
+          </motion.h1>
+          <motion.p
+            className="text-zinc-600 dark:text-zinc-400 mt-2 text-lg"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+          >
+            Discover, review, and manage your personal book collection.
+          </motion.p>
         </div>
 
         {user?.role === "admin" && (
           <motion.button
-            whileHover={{ scale: 1.02 }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6, type: "spring", stiffness: 200 }}
+            whileHover={{
+              scale: 1.05,
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)",
+            }}
             whileTap={{ scale: 0.95 }}
             onClick={() => setShowAddForm(!showAddForm)}
-            className="flex items-center gap-2 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg shadow-indigo-500/20 transition-all"
+            className="flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
           >
-            {showAddForm ? (
-              "Close Form"
-            ) : (
-              <>
-                <Plus size={20} /> Add Book
-              </>
-            )}
+            <motion.div
+              animate={{ rotate: showAddForm ? 45 : 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Plus size={20} />
+            </motion.div>
+            {showAddForm ? "Close Form" : "Add Book"}
           </motion.button>
         )}
-      </div>
+      </motion.div>
 
       <AnimatePresence>
         {showAddForm && (
