@@ -15,10 +15,10 @@ async function getAllBooks(page = 1, limit = 5) {
   return { rows, total };
 }
 
-async function createBook(title, author, description) {
+async function createBook(title, author, summary) {
   const { rows } = await db.query(
-    "INSERT INTO books (title, author, description) VALUES ($1, $2, $3) RETURNING *",
-    [title, author, description]
+    "INSERT INTO books (title, author, summary) VALUES ($1, $2, $3) RETURNING *",
+    [title, author, summary]
   );
   return rows[0];
 }

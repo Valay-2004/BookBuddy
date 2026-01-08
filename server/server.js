@@ -10,6 +10,7 @@ const bookRoutes = require("./src/routes/book.routes");
 const reviewRoutes = require("./src/routes/review.routes");
 const userRoutes = require("./src/routes/user.routes");
 const adminRoutes = require("./src/routes/admin.routes");
+const readingListRoutes = require("./src/routes/readingList.routes");
 
 const app = express(); // Express
 
@@ -23,6 +24,7 @@ app.use("/api/auth", authRoutes); // for authRoutes
 app.use("/api", reviewRoutes); // for reviews routes
 app.use("/api/users", userRoutes); // for user profile routes
 app.use("/api", adminRoutes); // for admin actions routes
+app.use("/api/reading-lists", readingListRoutes); // for reading list routes
 
 // Adding the centralized errorHandler
 const errorHandler = require("./src/middleware/errorHandler");

@@ -15,8 +15,8 @@ async function listBooks(req, res) {
 
 async function addBook(req, res) {
   try {
-    const { title, author, description } = req.body;
-    const newBook = await createBook(title, author, description);
+    const { title, author, summary } = req.body;
+    const newBook = await createBook(title, author, summary);
     return res.status(201).json(newBook);
   } catch (err) {
     console.error("Error adding book:", err);
