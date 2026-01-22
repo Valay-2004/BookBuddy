@@ -1,19 +1,8 @@
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
-import { Plus, BookOpen } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import { Plus, BookOpen, X, List } from "lucide-react";
 import { readingListAPI } from "../services/api";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { Button, Input, Label, Textarea, Badge } from "../components/ui/Core";
 
 export default function ReadingLists() {
   const [lists, setLists] = useState([]);
@@ -41,6 +30,7 @@ export default function ReadingLists() {
   };
 
   const handleCreateList = async () => {
+    if (!newList.name.trim()) return;
     try {
       await readingListAPI.createList(newList);
       setNewList({ name: "", description: "", isPublic: true });
@@ -52,84 +42,156 @@ export default function ReadingLists() {
   };
 
   if (loading) {
-    return <div className="p-8 text-center">Loading...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-pulse font-serif text-zinc-400">
+          Loading collections...
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-8">
+    <div className="min-h-screen bg-paper dark:bg-dark-paper p-8">
       <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">My Reading Lists</h1>
-          <Dialog
-            open={isCreateDialogOpen}
-            onOpenChange={setIsCreateDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button>
-                <Plus size={16} className="mr-2" />
-                Create List
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create New Reading List</DialogTitle>
-              </DialogHeader>
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 border-b border-zinc-200 dark:border-zinc-800 pb-6">
+          <div>
+            <h1 className="text-4xl font-serif font-black text-ink dark:text-white tracking-tight">
+              Curated <span className="text-accent italic">Collections</span>
+            </h1>
+            <p className="mt-2 text-zinc-500 max-w-lg">
+              Organize your reading journey into custom lists and track your
+              progress.
+            </p>
+          </div>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus size={18} />
+            Create List
+          </Button>
+        </div>
+
+        {/* Empty State */}
+        {lists.length === 0 && (
+          <div className="text-center py-20 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-xl">
+            <List className="mx-auto h-12 w-12 text-zinc-300 mb-3" />
+            <h3 className="font-serif text-xl text-zinc-500">
+              No lists created yet
+            </h3>
+            <p className="text-zinc-400 text-sm">
+              Start by creating your first collection.
+            </p>
+          </div>
+        )}
+
+        {/* Grid Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {lists.map((list, i) => (
+            <motion.div
+              key={list.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="group relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl hover:shadow-xl hover:border-accent/30 transition-all duration-300"
+            >
+              <div className="absolute top-6 right-6">
+                <Badge variant={list.is_public ? "accent" : "neutral"}>
+                  {list.is_public ? "Public" : "Private"}
+                </Badge>
+              </div>
+
+              <div className="mb-4 p-3 bg-zinc-50 dark:bg-zinc-800 w-fit rounded-lg text-accent">
+                <BookOpen size={24} />
+              </div>
+
+              <h3 className="text-xl font-serif font-bold text-ink dark:text-white mb-2 group-hover:text-accent transition-colors">
+                {list.name}
+              </h3>
+
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 min-h-[40px]">
+                {list.description || "No description provided."}
+              </p>
+
+              <div className="mt-6 pt-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center text-xs font-medium text-zinc-400">
+                <span>Updated recently</span>
+                <span className="group-hover:translate-x-1 transition-transform">
+                  View Collection &rarr;
+                </span>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Custom Modal for Create List */}
+      <AnimatePresence>
+        {isCreateDialogOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm"
+              onClick={() => setIsCreateDialogOpen(false)}
+            />
+
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative w-full max-w-md bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-6 border border-zinc-200 dark:border-zinc-800"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-serif font-bold">New Collection</h3>
+                <button
+                  onClick={() => setIsCreateDialogOpen(false)}
+                  className="text-zinc-400 hover:text-ink transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name">Collection Name</Label>
                   <Input
                     id="name"
                     value={newList.name}
                     onChange={(e) =>
                       setNewList({ ...newList, name: e.target.value })
                     }
-                    placeholder="e.g., To Read This Year"
+                    placeholder="e.g. Summer Reads 2026"
+                    autoFocus
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">Description (Optional)</Label>
                   <Textarea
                     id="description"
                     value={newList.description}
                     onChange={(e) =>
                       setNewList({ ...newList, description: e.target.value })
                     }
-                    placeholder="Optional description"
+                    placeholder="What is this collection about?"
+                    rows={3}
                   />
                 </div>
-                <Button onClick={handleCreateList}>Create</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {lists.map((list) => (
-            <motion.div
-              key={list.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpen size={20} />
-                    {list.name}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {list.description || "No description"}
-                  </p>
-                  <p className="text-xs mt-2">
-                    {list.is_public ? "Public" : "Private"}
-                  </p>
-                </CardContent>
-              </Card>
+                <div className="pt-2 flex gap-3 justify-end">
+                  <Button
+                    variant="ghost"
+                    onClick={() => setIsCreateDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateList}>Create List</Button>
+                </div>
+              </div>
             </motion.div>
-          ))}
-        </div>
-      </div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

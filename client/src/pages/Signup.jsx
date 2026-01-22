@@ -37,7 +37,6 @@ export default function Signup() {
     <div className="min-h-[calc(100vh-64px)] grid grid-cols-1 lg:grid-cols-2">
       <Toaster position="top-right" />
 
-      {/* Left Side: Form */}
       <div className="flex items-center justify-center p-8 bg-zinc-50 dark:bg-zinc-950">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
@@ -45,97 +44,86 @@ export default function Signup() {
           className="w-full max-w-md space-y-6"
         >
           <div className="text-center lg:text-left">
-            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
-              Create an account
+            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white font-serif">
+              Join the Library
             </h2>
             <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-              Join our community of book lovers today.
+              Create an account to start curating your collections.
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-2.5 h-5 w-5 text-zinc-400" />
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => handleChange("name", e.target.value)}
-                  className="input-field !pl-10"
-                  placeholder="John Doe"
-                />
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="label-style">Full Name</label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => handleChange("name", e.target.value)}
+                    className="input-field !pl-10"
+                    placeholder="John Doe"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-zinc-400" />
-                <input
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => handleChange("email", e.target.value)}
-                  className="input-field !pl-10"
-                  placeholder="john@example.com"
-                />
+              <div>
+                <label className="label-style">Email Address</label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => handleChange("email", e.target.value)}
+                    className="input-field !pl-10"
+                    placeholder="john@example.com"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-2.5 h-5 w-5 text-zinc-400" />
-                <input
-                  type="password"
-                  required
-                  value={formData.password}
-                  onChange={(e) => handleChange("password", e.target.value)}
-                  className="input-field !pl-10"
-                  placeholder="••••••••"
-                />
+              <div>
+                <label className="label-style">Password</label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
+                  <input
+                    type="password"
+                    required
+                    value={formData.password}
+                    onChange={(e) => handleChange("password", e.target.value)}
+                    className="input-field !pl-10"
+                    placeholder="••••••••"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Address */}
-            <div>
-              <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                Address{" "}
-                <span className="text-zinc-400 font-normal">(Optional)</span>
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-zinc-400" />
-                <textarea
-                  rows={2}
-                  value={formData.address}
-                  onChange={(e) => handleChange("address", e.target.value)}
-                  className="input-field !pl-10 resize-none"
-                  placeholder="123 Library Lane..."
-                />
+              <div>
+                <label className="label-style">Address (Optional)</label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-3 h-5 w-5 text-zinc-400" />
+                  <textarea
+                    rows={2}
+                    value={formData.address}
+                    onChange={(e) => handleChange("address", e.target.value)}
+                    className="input-field !pl-10 resize-none py-2"
+                    placeholder="Where should we send your books?"
+                  />
+                </div>
               </div>
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full flex justify-center items-center gap-2 py-2.5 mt-4"
+              className="btn-primary w-full flex justify-center items-center gap-2 py-3 mt-2"
             >
               {loading ? (
                 <Loader2 className="animate-spin h-5 w-5" />
               ) : (
                 <>
-                  Create Account <ArrowRight size={16} />
+                  Create Account <ArrowRight size={18} />
                 </>
               )}
             </button>
@@ -145,7 +133,7 @@ export default function Signup() {
             Already have an account?{" "}
             <Link
               to="/login"
-              className="font-semibold text-brand-600 hover:text-brand-500 transition-colors"
+              className="font-semibold text-brand-600 hover:text-brand-700"
             >
               Log in
             </Link>
@@ -153,22 +141,16 @@ export default function Signup() {
         </motion.div>
       </div>
 
-      {/* Right Side: Brand */}
       <div className="hidden lg:flex relative bg-zinc-900 items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-black" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-black opacity-90" />
         <div className="relative z-10 max-w-md text-center px-8">
           <h3 className="text-2xl font-serif italic text-zinc-200 mb-6">
             "Reading gives us someplace to go when we have to stay where we
             are."
           </h3>
-          <div className="flex items-center justify-center gap-3">
-            <div className="h-px w-8 bg-brand-500" />
-            <p className="text-brand-500 font-medium tracking-widest text-sm uppercase">
-              Mason Cooley
-            </p>
-            <div className="h-px w-8 bg-brand-500" />
-          </div>
+          <p className="text-brand-500 font-medium tracking-widest text-sm uppercase">
+            — Mason Cooley
+          </p>
         </div>
       </div>
     </div>

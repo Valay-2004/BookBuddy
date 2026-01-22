@@ -31,7 +31,6 @@ export default function Login() {
 
   return (
     <div className="min-h-[calc(100vh-64px)] grid grid-cols-1 lg:grid-cols-2">
-      {/* Left: Form */}
       <div className="flex items-center justify-center p-8 bg-zinc-50 dark:bg-zinc-950">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -39,7 +38,7 @@ export default function Login() {
           className="w-full max-w-sm space-y-8"
         >
           <div className="text-center lg:text-left">
-            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            <h2 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white font-serif">
               Welcome back
             </h2>
             <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
@@ -50,16 +49,16 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
               <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1.5">
-                Email
+                Email Address
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-zinc-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="input-field pl-10!"
-                  placeholder="name@company.com"
+                  className="input-field !pl-10"
+                  placeholder="name@example.com"
                   required
                 />
               </div>
@@ -70,12 +69,12 @@ export default function Login() {
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-2.5 h-5 w-5 text-zinc-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input-field pl-10!"
+                  className="input-field !pl-10"
                   placeholder="••••••••"
                   required
                 />
@@ -83,9 +82,13 @@ export default function Login() {
             </div>
 
             {error && (
-              <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/10 dark:text-red-400 rounded-lg border border-red-100 dark:border-red-900/20">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/10 dark:text-red-400 rounded-lg border border-red-100 dark:border-red-900/20"
+              >
                 {error}
-              </div>
+              </motion.div>
             )}
 
             <button
@@ -113,10 +116,9 @@ export default function Login() {
         </motion.div>
       </div>
 
-      {/* Right: Decorative Area */}
       <div className="hidden lg:flex relative bg-zinc-900 items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-black" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-500/20 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-black opacity-90" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl" />
         <div className="relative z-10 max-w-md text-center px-8">
           <h3 className="text-2xl font-serif italic text-zinc-200 mb-6">
             "A room without books is like a body without a soul."
@@ -124,7 +126,7 @@ export default function Login() {
           <div className="flex items-center justify-center gap-3">
             <div className="h-px w-8 bg-brand-500" />
             <p className="text-brand-500 font-medium tracking-widest text-sm uppercase">
-              Marcus Tullius Cicero
+              Cicero
             </p>
             <div className="h-px w-8 bg-brand-500" />
           </div>
