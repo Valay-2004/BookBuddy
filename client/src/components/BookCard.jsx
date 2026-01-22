@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "motion/react";
 import { Star, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Core";
 
 export default function BookCard({
   book,
@@ -25,7 +25,7 @@ export default function BookCard({
     >
       <Card className="group relative overflow-hidden flex flex-col h-full hover:shadow-xl hover:shadow-brand-500/10 dark:hover:shadow-brand-500/20 transition-all duration-500 border-2 border-transparent hover:border-brand-200 dark:hover:border-brand-800 bg-gradient-to-br from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-800">
         {/* Decorative gradient line at top */}
-        <div className="h-1 w-full bg-gradient-to-r from-brand-400 via-brand-500 to-brand-600 group-hover:from-brand-500 group-hover:via-brand-600 group-hover:to-brand-700 transition-all duration-500" />
+        <div className="h-1 w-full bg-linear-to-r from-brand-400 via-brand-500 to-brand-600 group-hover:from-brand-500 group-hover:via-brand-600 group-hover:to-brand-700 transition-all duration-500" />
 
         <CardContent className="p-6 flex flex-col flex-1">
           {/* Header: Title & Actions */}

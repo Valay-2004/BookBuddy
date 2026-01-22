@@ -1,100 +1,116 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import ReactStars from "react-rating-stars-component";
+import { Star, X } from "lucide-react";
+import { Button, Textarea, Label } from "../ui/Core";
 
-/**
- * ReviewModal - modal for adding/editing a review for a book.
- *
- * Props:
- * - isOpen: boolean - whether the modal is visible
- * - bookId: id of the book being reviewed
- * - rating: current rating value (1-5)
- * - reviewText: current review text
- * - isSubmitting: boolean - whether submit is in progress
- * - onRatingChange(value): called when rating is changed
- * - onTextChange(value): called when review text is changed
- * - onSubmit(): called when Save button is clicked
- * - onClose(): called when modal should close
- */
 export default function ReviewModal({
   isOpen,
-  bookId,
-  rating,
-  reviewText,
+  rating = 0,
+  reviewText = "",
   isSubmitting,
   onRatingChange,
   onTextChange,
   onSubmit,
   onClose,
 }) {
+  const [hoverRating, setHoverRating] = useState(0);
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-          onClick={onClose}
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
           <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ duration: 0.12 }}
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 w-full max-w-lg mx-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm"
+            onClick={onClose}
+          />
+
+          {/* Modal Content */}
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0, y: 10 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.95, opacity: 0, y: 10 }}
+            className="relative w-full max-w-lg bg-paper dark:bg-zinc-900 rounded-2xl shadow-2xl overflow-hidden border border-zinc-200 dark:border-zinc-800"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-2xl font-bold mb-6 bg-linear-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              Add / Edit Review
-            </h3>
+            {/* Header */}
+            <div className="p-6 pb-4 border-b border-zinc-100 dark:border-zinc-800 flex justify-between items-center bg-white/50 dark:bg-zinc-800/50">
+              <h3 className="text-xl font-serif font-bold text-ink dark:text-white">
+                Write a Review
+              </h3>
+              <button
+                onClick={onClose}
+                className="text-zinc-400 hover:text-ink transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-            <div className="space-y-5">
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 min-w-fit">
-                  Rating:
-                </label>
-                <ReactStars
-                  count={5}
-                  value={rating}
-                  onChange={onRatingChange}
-                  size={24}
-                  isHalf={true}
-                  activeColor="#ffd700"
-                />
+            <div className="p-6 space-y-6">
+              {/* Star Rating Picker */}
+              <div className="flex flex-col items-center justify-center gap-3 py-2">
+                <Label className="mb-0">Your Rating</Label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      onClick={() => onRatingChange(star)}
+                      className="transition-transform hover:scale-110 focus:outline-none"
+                    >
+                      <Star
+                        size={32}
+                        className={`transition-colors duration-200 ${
+                          star <= (hoverRating || rating)
+                            ? "fill-accent text-accent"
+                            : "text-zinc-300 dark:text-zinc-700"
+                        }`}
+                        strokeWidth={1.5}
+                      />
+                    </button>
+                  ))}
+                </div>
+                <span className="text-sm font-medium text-accent h-5">
+                  {(hoverRating || rating) > 0
+                    ? ["Poor", "Fair", "Good", "Very Good", "Excellent"][
+                        (hoverRating || rating) - 1
+                      ]
+                    : ""}
+                </span>
               </div>
 
-              <div>
-                <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 block">
-                  Review (optional)
-                </label>
-                <textarea
+              {/* Review Text */}
+              <div className="space-y-2">
+                <Label>Critique</Label>
+                <Textarea
                   value={reviewText}
                   onChange={(e) => onTextChange(e.target.value)}
-                  rows={5}
-                  className="w-full p-3 rounded-lg bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white focus:ring-2 focus:ring-purple-500 focus:outline-none transition resize-none"
-                  placeholder="Share your thoughts about this book..."
+                  placeholder="What did you think of the plot? The pacing? Share your honest thoughts..."
+                  rows={4}
+                  className="bg-white dark:bg-zinc-950/50"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 pt-4">
-                <button
-                  onClick={onClose}
-                  className="px-5 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-medium transition"
-                >
-                  Cancel
-                </button>
-                <button
+              {/* Actions */}
+              <div className="flex gap-3 justify-end pt-2">
+                <Button variant="ghost" onClick={onClose}>
+                  Discard
+                </Button>
+                <Button
                   onClick={onSubmit}
-                  disabled={isSubmitting}
-                  className="px-6 py-2 bg-linear-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg disabled:opacity-60 disabled:cursor-not-allowed transition"
+                  disabled={isSubmitting || rating === 0}
                 >
-                  {isSubmitting ? "Saving..." : "Save"}
-                </button>
+                  {isSubmitting ? "Publishing..." : "Publish Review"}
+                </Button>
               </div>
             </div>
           </motion.div>
-        </motion.div>
+        </div>
       )}
     </AnimatePresence>
   );

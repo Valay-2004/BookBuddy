@@ -1,110 +1,112 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import ThemeToggle from "./ThemeToggle";
-import { BookOpen, Library, User, LogOut, ChevronRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
+import { BookOpen, User, LogIn, Menu, X } from "lucide-react";
+import { useState } from "react";
+import { Button } from "./ui/Core";
 
 export default function NavBar() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
 
-  const handleLogout = () => {
-    logout();
-    navigate("/", { replace: true });
-  };
+  const navLinks = [
+    { name: "Reviews", path: "/" },
+    { name: "Reading Lists", path: "/reading-lists" },
+  ];
 
-  const linkClass = ({ isActive }) =>
-    `flex items-center gap-2 text-sm font-medium transition-all duration-200 px-3 py-1.5 rounded-md ${
-      isActive
-        ? "text-brand-600 bg-brand-50 dark:bg-brand-500/10 dark:text-brand-100"
-        : "text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-    }`;
+  const isActive = (path) => location.pathname === path;
 
   return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="sticky top-0 z-50 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-2xl border-b border-zinc-200/50 dark:border-zinc-800/50 shadow-sm"
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex justify-between items-center">
-        {/* Brand Area */}
-        <div className="flex items-center gap-8">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <NavLink to="/" className="flex items-center gap-2.5 group">
-              <motion.div
-                className="bg-gradient-to-br from-brand-500 to-brand-600 text-white p-2 rounded-xl shadow-lg group-hover:shadow-xl group-hover:from-brand-600 group-hover:to-brand-700 transition-all duration-300"
-                whileHover={{ rotate: 5 }}
-              >
-                <BookOpen size={20} strokeWidth={2.5} />
-              </motion.div>
-              <span className="font-bold text-xl tracking-tight text-zinc-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-300 transition-colors duration-300">
-                BookBuddy
-              </span>
-            </NavLink>
-          </motion.div>
-
-          <div className="hidden md:flex items-center gap-2">
-            <motion.div whileHover={{ scale: 1.02 }}>
-              <NavLink to="/" className={linkClass}>
-                <Library size={16} />
-                Library
-              </NavLink>
-            </motion.div>
-            {user && (
-              <motion.div whileHover={{ scale: 1.02 }}>
-                <NavLink to="/reading-lists" className={linkClass}>
-                  <BookOpen size={16} />
-                  My Lists
-                </NavLink>
-              </motion.div>
-            )}
+    <header className="sticky top-0 z-50 w-full glass-panel border-b-0 border-zinc-200/50">
+      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+        {/* Logo - Serif & Bold */}
+        <Link to="/" className="flex items-center gap-2 group">
+          <div className="bg-accent text-white p-1.5 rounded-lg group-hover:rotate-[-5deg] transition-transform">
+            <BookOpen size={20} fill="currentColor" />
           </div>
-        </div>
+          <span className="font-serif text-2xl font-black tracking-tight text-ink dark:text-white">
+            Book<span className="text-accent">.buddy</span>
+          </span>
+        </Link>
 
-        {/* Actions Area */}
-        <div className="flex items-center gap-4">
-          <ThemeToggle />
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-8">
+          {navLinks.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`text-sm font-medium transition-colors ${
+                isActive(link.path)
+                  ? "text-accent font-semibold"
+                  : "text-zinc-500 hover:text-ink dark:text-zinc-400 dark:hover:text-zinc-100"
+              }`}
+            >
+              {link.name}
+            </Link>
+          ))}
+        </nav>
 
-          <div className="h-5 w-px bg-zinc-200 dark:bg-zinc-800" />
-
+        {/* Actions */}
+        <div className="hidden md:flex items-center gap-4">
+          {/* <ThemeToggle /> */}
           {user ? (
-            <div className="flex items-center gap-3">
-              <NavLink to="/profile" className={linkClass}>
+            <Link to="/profile">
+              <Button variant="secondary" className="pl-3 pr-4 py-2">
                 <User size={16} />
-                <span className="hidden sm:inline">Profile</span>
-              </NavLink>
-
-              <button
-                onClick={handleLogout}
-                className="text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400 transition-colors p-2"
-                title="Logout"
-              >
-                <LogOut size={18} />
-              </button>
-
-              <div className="hidden sm:flex items-center justify-center w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-300 text-xs font-bold uppercase border border-brand-200 dark:border-brand-800">
-                {user.name.charAt(0)}
-              </div>
-            </div>
+                <span>Profile</span>
+              </Button>
+            </Link>
           ) : (
-            <div className="flex items-center gap-3">
-              <NavLink
-                to="/login"
-                className="text-sm font-medium text-zinc-600 dark:text-zinc-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-              >
-                Sign in
-              </NavLink>
-              <NavLink
-                to="/signup"
-                className="btn-primary flex items-center gap-1 text-sm"
-              >
-                Get Started <ChevronRight size={14} />
-              </NavLink>
+            <div className="flex gap-2">
+              <Link to="/login">
+                <Button variant="ghost">Log In</Button>
+              </Link>
+              <Link to="/signup">
+                <Button>Get Started</Button>
+              </Link>
             </div>
           )}
         </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          className="md:hidden p-2 text-zinc-600"
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {isOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
       </div>
-    </motion.nav>
+
+      {/* Mobile Menu Dropdown */}
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="md:hidden absolute top-16 left-0 w-full bg-white dark:bg-zinc-950 border-b border-zinc-200 p-6 flex flex-col gap-4 shadow-xl"
+        >
+          {navLinks.map((link) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              onClick={() => setIsOpen(false)}
+              className="text-lg font-serif font-medium text-zinc-800 dark:text-zinc-200"
+            >
+              {link.name}
+            </Link>
+          ))}
+          <div className="h-px bg-zinc-100 w-full my-2" />
+          {user ? (
+            <Link to="/profile" onClick={() => setIsOpen(false)}>
+              <Button className="w-full">My Profile</Button>
+            </Link>
+          ) : (
+            <Link to="/login" onClick={() => setIsOpen(false)}>
+              <Button className="w-full">Log In</Button>
+            </Link>
+          )}
+        </motion.div>
+      )}
+    </header>
   );
 }
