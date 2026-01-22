@@ -90,6 +90,10 @@ export default function Books() {
   };
 
   const handleReviewSubmit = async () => {
+    if (!reviewOpenFor) {
+      toast.error("Book ID is missing");
+      return;
+    }
     setIsReviewSubmitting(true);
     try {
       await API.post(`/books/${reviewOpenFor}/reviews`, {
@@ -97,12 +101,14 @@ export default function Books() {
         reviewText,
       });
       toast.success("Review posted");
-      setReviewOpenFor(null);
       // Refresh reviews for this book
       const { data } = await API.get(`/books/${reviewOpenFor}/reviews`);
       setBookReviews((prev) => ({ ...prev, [reviewOpenFor]: data }));
+      setReviewOpenFor(null);
+      setReviewRating(5);
+      setReviewText("");
     } catch (err) {
-      toast.error("Failed to post review");
+      toast.error(err.response?.data?.error || "Failed to post review");
     } finally {
       setIsReviewSubmitting(false);
     }

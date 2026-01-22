@@ -23,7 +23,18 @@ export default function Login() {
       login(data.user, data.token);
       navigate("/profile", { replace: true });
     } catch (err) {
-      setError("Invalid email or password");
+      // Better error handling for different scenarios
+      if (err.response?.status === 400) {
+        setError(err.response.data.error || "Invalid email or password");
+      } else if (err.response?.status === 500) {
+        setError("Server error. Please try again later.");
+      } else if (err.message === "Network Error") {
+        setError("Unable to connect to server. Check your connection.");
+      } else {
+        setError(
+          err.response?.data?.error || "Login failed. Please try again.",
+        );
+      }
     } finally {
       setIsLoading(false);
     }

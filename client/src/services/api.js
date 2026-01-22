@@ -1,9 +1,11 @@
 import axios from "axios";
 
-// Our backend base URL
-// (adjust port if the server runs on 5000)
+// Our backend base URL - Support environment variable for production
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
   },
@@ -21,6 +23,21 @@ API.interceptors.request.use((config) => {
   }
   return config;
 });
+
+// Response interceptor for error handling
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle 401 (unauthorized) - token might be expired
+    if (error.response?.status === 401) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      // Optionally redirect to login page
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  },
+);
 
 // Reading Lists API
 export const readingListAPI = {

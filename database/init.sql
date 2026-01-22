@@ -25,6 +25,17 @@ CREATE TABLE IF NOT EXISTS books (
   summary TEXT NOT NULL
 );
 
+-- Reviews
+CREATE TABLE IF NOT EXISTS reviews (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  book_id INTEGER REFERENCES books(id) ON DELETE CASCADE,
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  review_text TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, book_id)
+);
+
 -- Reading Lists
 CREATE TABLE IF NOT EXISTS reading_lists (
   id SERIAL PRIMARY KEY,
