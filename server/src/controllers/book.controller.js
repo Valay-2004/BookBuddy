@@ -9,14 +9,19 @@ async function listBooks(req, res) {
     const totalPages = Math.ceil(total / limit);
     res.json({ success: true, page, limit, total, totalPages, books: rows });
   } catch (err) {
+    console.error("❌ ERROR in listBooks:", err.message);
+    console.error("Full error:", err);
     res.status(500).json({ error: err.message });
   }
 }
 
 async function addBook(req, res) {
   try {
-    const { title, author, summary } = req.body;
-    const newBook = await createBook(title, author, summary);
+    const { title, author, summary, description, isbn, cover_url, published_year } = req.body;
+    // Handle both description and summary (legacy)
+    const bookDescription = description || summary;
+    
+    const newBook = await createBook(title, author, bookDescription, isbn, cover_url, published_year);
     return res.status(201).json(newBook);
   } catch (err) {
     console.error("Error adding book:", err);
