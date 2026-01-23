@@ -51,6 +51,13 @@ app.use("/api/reading-lists", readingListRoutes); // for reading list routes
 const errorHandler = require("./src/middleware/errorHandler");
 app.use(errorHandler);
 
+// Database Migration (Self-Healing)
+const runMigrations = require("./src/utils/migrate");
+
 // Port for server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+
+// Run migrations then start server
+runMigrations().then(() => {
+  app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+});
