@@ -1,5 +1,4 @@
-const { getAllBooks, createBook } = require("../models/book.model");
-const { deleteBook } = require("./admin.controller");
+const { getAllBooks, createBook, deleteBookById, searchBooks: searchModel, getTopRatedBook } = require("../models/book.model");
 // console.log(require("../models/book.model"));
 async function listBooks(req, res) {
   try {
@@ -29,4 +28,43 @@ async function addBook(req, res) {
   }
 }
 
-module.exports = { listBooks, addBook };
+async function deleteBook(req, res) {
+  try {
+    const { id } = req.params;
+    const deleted = await deleteBookById(id);
+    if (deleted) {
+      res.json({ success: true, message: "Book deleted successfully" });
+    } else {
+      res.status(404).json({ success: false, error: "Book not found" });
+    }
+  } catch (err) {
+    console.error("Error deleting book:", err);
+    res.status(500).json({ success: false, error: "Failed to delete book" });
+  }
+}
+
+async function searchBooks(req, res) {
+  try {
+    const { q } = req.query;
+    if (!q) {
+      return res.status(400).json({ success: false, error: "Query parameter 'q' is required" });
+    }
+    const books = await searchModel(q);
+    res.json({ success: true, books });
+  } catch (err) {
+    console.error("Error searching books:", err);
+    res.status(500).json({ success: false, error: "Failed to search books" });
+  }
+}
+
+async function getTopRated(req, res) {
+  try {
+    const book = await getTopRatedBook();
+    res.json({ success: true, book: book || null });
+  } catch (err) {
+    console.error("Error fetching top rated book:", err);
+    res.status(500).json({ success: false, error: "Failed to fetch top rated book" });
+  }
+}
+
+module.exports = { listBooks, addBook, deleteBook, searchBooks, getTopRated };

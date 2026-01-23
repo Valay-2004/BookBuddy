@@ -1,30 +1,5 @@
 const db = require("../config/database");
 
-// create book role
-async function createBook(req, res) {
-  try {
-    const { title, author, description } = req.body;
-    const { rows } = await db.query(
-      "INSERT INTO books (title, author, description) VALUES ($1, $2, $3) RETURNING *",
-      [title, author, description]
-    );
-    res.status(201).json({ success: true, data: rows[0] });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-}
-
-// role for deleting a book
-async function deleteBook(req, res) {
-  try {
-    const { id } = req.params;
-    await db.query("DELETE FROM books WHERE id = $1", [id]);
-    res.json({ success: true, message: "Book deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-}
-
 // role for getting all the reviews
 async function getAllReviews(req, res) {
   try {
@@ -52,4 +27,4 @@ async function deleteReview(req, res) {
   }
 }
 
-module.exports = { createBook, deleteBook, getAllReviews, deleteReview };
+module.exports = { getAllReviews, deleteReview };
