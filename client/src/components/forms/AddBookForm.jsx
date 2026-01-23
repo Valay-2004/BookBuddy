@@ -11,6 +11,9 @@ export default function AddBookForm({ onAdd, onCancel, isSubmitting }) {
     title: "",
     author: "",
     summary: "",
+    isbn: "",
+    cover_url: "",
+    published_year: "",
   });
 
   const editor = useEditor({
@@ -130,6 +133,49 @@ export default function AddBookForm({ onAdd, onCancel, isSubmitting }) {
           <p className="text-xs text-zinc-400 text-right pt-1">
             Powered by Tiptap Editor
           </p>
+        </div>
+
+        {/* Optional Metadata Fields */}
+        <div className="border-t border-zinc-200 dark:border-zinc-700 pt-6 space-y-4">
+          <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Optional Metadata</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-1">
+              <Label htmlFor="isbn">ISBN</Label>
+              <Input
+                id="isbn"
+                value={newBook.isbn}
+                onChange={(e) =>
+                  setNewBook({ ...newBook, isbn: e.target.value })
+                }
+                placeholder="e.g. 978-0743273565"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="cover_url">Cover URL</Label>
+              <Input
+                id="cover_url"
+                value={newBook.cover_url}
+                onChange={(e) =>
+                  setNewBook({ ...newBook, cover_url: e.target.value })
+                }
+                placeholder="https://..."
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="published_year">Published Year</Label>
+              <Input
+                id="published_year"
+                type="number"
+                value={newBook.published_year}
+                onChange={(e) =>
+                  setNewBook({ ...newBook, published_year: e.target.value })
+                }
+                placeholder="e.g. 2024"
+              />
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end gap-3 pt-2">

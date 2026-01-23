@@ -35,12 +35,19 @@ export default function Books() {
   const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
 
   const attachCoverUrls = (books) => {
-    return books.map((book) => ({
-      ...book,
-      cover_url: `https://covers.openlibrary.org/b/title/${encodeURIComponent(
-        book.title,
-      )}-L.jpg`,
-    }));
+    return books.map((book) => {
+      // Priority: 1) Database cover_url, 2) Open Library API, 3) Fallback
+      let cover_url = book.cover_url;
+      if (!cover_url) {
+        cover_url = `https://covers.openlibrary.org/b/title/${encodeURIComponent(
+          book.title,
+        )}-L.jpg`;
+      }
+      return {
+        ...book,
+        cover_url,
+      };
+    });
   };
 
   const fetchBooks = useCallback(async (pageNum) => {
@@ -240,6 +247,14 @@ export default function Books() {
                 <h4 className="font-bold text-lg leading-tight">
                   {books[0]?.title || "The Silent Patient"}
                 </h4>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+                  by {books[0]?.author || "Unknown"}
+                </p>
+                {books[0]?.published_year && (
+                  <p className="text-xs text-zinc-400 mt-1">
+                    Published {books[0].published_year}
+                  </p>
+                )}
               </div>
 
               <div className="mt-8">

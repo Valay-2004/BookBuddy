@@ -139,7 +139,9 @@ export default function BookList({
                 <div className="flex items-center gap-4 text-xs text-zinc-500 font-medium">
                   <span>{reviews.length} Reviews</span>
                   <span className="w-1 h-1 bg-zinc-300 rounded-full" />
-                  <span>Published 2024</span>
+                  <span>
+                    {book.published_year ? `Published ${book.published_year}` : "Publication year unknown"}
+                  </span>
                 </div>
 
                 <div className="flex gap-3">
