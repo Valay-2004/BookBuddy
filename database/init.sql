@@ -22,7 +22,10 @@ CREATE TABLE IF NOT EXISTS books (
   id SERIAL PRIMARY KEY,
   title VARCHAR(200) NOT NULL,
   author VARCHAR(100) NOT NULL,
-  summary TEXT NOT NULL
+  description TEXT NOT NULL,
+  isbn VARCHAR(20),
+  cover_url TEXT,
+  published_year INTEGER
 );
 
 -- Reviews
