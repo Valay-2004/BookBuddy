@@ -20,6 +20,9 @@ export default function Books() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [topRatedBook, setTopRatedBook] = useState(null);
 
   // UI States
   const [showAddForm, setShowAddForm] = useState(false);
@@ -65,8 +68,29 @@ export default function Books() {
   }, []);
 
   useEffect(() => {
-    fetchBooks(page);
-  }, [page, fetchBooks]);
+    if (searchTerm) {
+      const delayDebounceFn = setTimeout(() => {
+        handleSearch(searchTerm);
+      }, 500);
+      return () => clearTimeout(delayDebounceFn);
+    } else {
+      fetchBooks(page);
+    }
+  }, [searchTerm, page, fetchBooks]);
+
+  const handleSearch = async (query) => {
+    setIsSearching(true);
+    try {
+      const { data } = await API.get(`/books/search?q=${query}`);
+      const booksWithCovers = attachCoverUrls(data.books);
+      setBooks(booksWithCovers);
+      setTotalPages(1); // Search results usually don't have pagination in this simple impl
+    } catch (err) {
+      toast.error("Search failed");
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   // Fetch reviews for visible books
   useEffect(() => {
@@ -79,6 +103,22 @@ export default function Books() {
       }
     });
   }, [books]);
+
+  // Fetch top rated book for sidebar
+  useEffect(() => {
+    const fetchTopRated = async () => {
+      try {
+        const { data } = await API.get("/books/top-rated");
+        if (data.book) {
+          const [bookWithCover] = attachCoverUrls([data.book]);
+          setTopRatedBook(bookWithCover);
+        }
+      } catch (e) {
+        console.error("Top rated error", e);
+      }
+    };
+    fetchTopRated();
+  }, []);
 
   const handleAddBook = async (bookData) => {
     setIsSubmitting(true);
@@ -145,17 +185,23 @@ export default function Books() {
           {/* Controls */}
           <div className="flex items-center gap-3">
             {/* Search Mockup */}
-            <div className="relative hidden sm:block">
-              <Search
-                className="absolute left-3 top-2.5 text-zinc-400"
-                size={18}
-              />
-              <input
-                type="text"
-                placeholder="Search titles..."
-                className="pl-10 pr-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-sm outline-none focus:border-accent"
-              />
-            </div>
+              <motion.div 
+                className="relative hidden sm:block"
+                whileFocus={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              >
+                <Search
+                  className={`absolute left-3 top-2.5 transition-colors duration-300 ${isSearching ? "text-accent animate-pulse" : "text-zinc-400"}`}
+                  size={18}
+                />
+                <input
+                  type="text"
+                  placeholder="Search titles..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/10 transition-all duration-300 w-64 focus:w-80"
+                />
+              </motion.div>
 
             {user?.role === "admin" && (
               <Button onClick={() => setShowAddForm(!showAddForm)}>
@@ -203,6 +249,7 @@ export default function Books() {
               user={user}
               bookReviews={bookReviews}
               onOpenReview={setReviewOpenFor}
+              onViewReviews={setViewReviewsFor}
               onDelete={setDeleteConfirmId}
             />
 
@@ -234,9 +281,8 @@ export default function Books() {
                 </h3>
                 <div className="relative aspect-[2/3] mb-4 w-full overflow-hidden rounded-lg shadow-md group">
                   <img
-                    // Example using the first book in your list as Editor's pick
-                    src={books[0]?.cover_url || "/covers/fallback-book.png"}
-                    alt={books[0]?.title}
+                    src={topRatedBook?.cover_url || books[0]?.cover_url || "/covers/fallback-book.png"}
+                    alt={topRatedBook?.title || books[0]?.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     onError={(e) => {
                       e.target.onerror = null;
@@ -245,14 +291,14 @@ export default function Books() {
                   />
                 </div>
                 <h4 className="font-bold text-lg leading-tight">
-                  {books[0]?.title || "The Silent Patient"}
+                  {topRatedBook?.title || books[0]?.title || "Seeking Recommendations..."}
                 </h4>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                  by {books[0]?.author || "Unknown"}
+                  by {topRatedBook?.author || books[0]?.author || "Unknown"}
                 </p>
-                {books[0]?.published_year && (
+                {(topRatedBook?.published_year || books[0]?.published_year) && (
                   <p className="text-xs text-zinc-400 mt-1">
-                    Published {books[0].published_year}
+                    Published {topRatedBook?.published_year || books[0]?.published_year}
                   </p>
                 )}
               </div>
@@ -284,6 +330,12 @@ export default function Books() {
         </div>
 
         {/* Modals - Keeping your existing logic, just wrapping them */}
+        <ViewReviewsModal
+          isOpen={!!viewReviewsFor}
+          reviews={bookReviews[viewReviewsFor] || []}
+          onClose={() => setViewReviewsFor(null)}
+        />
+
         <ReviewModal
           isOpen={!!reviewOpenFor}
           rating={reviewRating}

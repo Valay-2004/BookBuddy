@@ -14,6 +14,11 @@ export default function ReadingLists() {
     isPublic: true,
   });
 
+  // Collection Details State
+  const [selectedList, setSelectedList] = useState(null);
+  const [listBooks, setListBooks] = useState([]);
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
+
   useEffect(() => {
     fetchLists();
   }, []);
@@ -26,6 +31,20 @@ export default function ReadingLists() {
       console.error("Failed to fetch lists", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewCollection = async (list) => {
+    setSelectedList(list);
+    setIsDetailsLoading(true);
+    setListBooks([]);
+    try {
+      const { data } = await readingListAPI.getList(list.id);
+      setListBooks(data.books);
+    } catch (error) {
+      console.error("Failed to fetch list books", error);
+    } finally {
+      setIsDetailsLoading(false);
     }
   };
 
@@ -92,7 +111,8 @@ export default function ReadingLists() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
-              className="group relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl hover:shadow-xl hover:border-accent/30 transition-all duration-300"
+              onClick={() => handleViewCollection(list)}
+              className="group relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl hover:shadow-xl hover:border-accent/30 transition-all duration-300 cursor-pointer"
             >
               <div className="absolute top-6 right-6">
                 <Badge variant={list.is_public ? "accent" : "neutral"}>
@@ -122,6 +142,91 @@ export default function ReadingLists() {
           ))}
         </div>
       </div>
+
+      {/* Collection Details Modal */}
+      <AnimatePresence>
+        {selectedList && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-zinc-900/60 backdrop-blur-sm"
+              onClick={() => setSelectedList(null)}
+            />
+
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              className="relative w-full max-w-2xl bg-paper dark:bg-zinc-900 rounded-2xl shadow-2xl p-6 border border-zinc-200 dark:border-zinc-800 flex flex-col max-h-[80vh]"
+            >
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h3 className="text-2xl font-serif font-bold text-ink dark:text-white">
+                    {selectedList.name}
+                  </h3>
+                  <p className="text-sm text-zinc-500 mt-1 italic">
+                    {selectedList.description || "A curated collection of titles."}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedList(null)}
+                  className="text-zinc-400 hover:text-ink transition-colors p-1"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="overflow-y-auto pr-2 custom-scrollbar">
+                {isDetailsLoading ? (
+                  <div className="space-y-4 py-8">
+                    {[1, 2, 3].map((n) => (
+                      <div key={n} className="h-20 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl animate-pulse" />
+                    ))}
+                  </div>
+                ) : listBooks.length === 0 ? (
+                  <div className="text-center py-12 text-zinc-400">
+                    <BookOpen size={40} className="mx-auto mb-3 opacity-20" />
+                    <p className="font-serif italic">This collection is currently empty.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {listBooks.map((book) => (
+                      <div 
+                        key={book.id}
+                        className="flex gap-4 p-4 bg-white dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800 group hover:border-accent/40 transition-all duration-300"
+                      >
+                        <div className="w-16 h-24 shrink-0 rounded shadow-sm overflow-hidden bg-zinc-200">
+                          <img 
+                            src={book.cover_url || `https://covers.openlibrary.org/b/title/${encodeURIComponent(book.title)}-M.jpg`} 
+                            alt={book.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "/covers/fallback-book.png";
+                            }}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-bold text-ink dark:text-white group-hover:text-accent transition-colors">
+                            {book.title}
+                          </h4>
+                          <p className="text-xs text-zinc-500 mb-2">by {book.author}</p>
+                          <div 
+                            className="text-xs text-zinc-400 line-clamp-2 leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: book.description }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Custom Modal for Create List */}
       <AnimatePresence>
