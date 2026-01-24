@@ -25,6 +25,7 @@ export default function BookList({
   user,
   bookReviews,
   onOpenReview,
+  onViewReviews,
   onDelete,
 }) {
   if (isLoading) {
@@ -147,7 +148,7 @@ export default function BookList({
                 <div className="flex gap-3">
                   <Button
                     variant="secondary"
-                    onClick={() => onOpenReview(book.id)}
+                    onClick={() => onViewReviews(book.id)}
                   >
                     View Reviews
                   </Button>

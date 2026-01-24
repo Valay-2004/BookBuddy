@@ -67,7 +67,7 @@ export default function BookCard({
 
           <motion.div
             className="text-zinc-600 dark:text-zinc-300 text-sm leading-relaxed line-clamp-3 mb-6 flex-1 group-hover:text-zinc-800 dark:group-hover:text-zinc-200 transition-colors duration-300"
-            dangerouslySetInnerHTML={{ __html: book.summary }}
+            dangerouslySetInnerHTML={{ __html: book.description }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}

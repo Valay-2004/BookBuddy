@@ -10,7 +10,7 @@ export default function AddBookForm({ onAdd, onCancel, isSubmitting }) {
   const [newBook, setNewBook] = useState({
     title: "",
     author: "",
-    summary: "",
+    description: "",
     isbn: "",
     cover_url: "",
     published_year: "",
@@ -18,7 +18,7 @@ export default function AddBookForm({ onAdd, onCancel, isSubmitting }) {
 
   const editor = useEditor({
     extensions: [StarterKit],
-    content: newBook.summary,
+    content: newBook.description,
     editorProps: {
       attributes: {
         class:
@@ -26,7 +26,7 @@ export default function AddBookForm({ onAdd, onCancel, isSubmitting }) {
       },
     },
     onUpdate: ({ editor }) => {
-      setNewBook((prev) => ({ ...prev, summary: editor.getHTML() }));
+      setNewBook((prev) => ({ ...prev, description: editor.getHTML() }));
     },
   });
 
@@ -53,7 +53,7 @@ export default function AddBookForm({ onAdd, onCancel, isSubmitting }) {
         setNewBook({
           ...newBook,
           author: book.author_name ? book.author_name[0] : newBook.author,
-          summary: summaryText,
+          description: summaryText,
         });
 
         if (editor) editor.commands.setContent(summaryText);
@@ -126,7 +126,7 @@ export default function AddBookForm({ onAdd, onCancel, isSubmitting }) {
         </div>
 
         <div className="space-y-1">
-          <Label>Summary / Notes</Label>
+          <Label>Description / Notes</Label>
           <div className="border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 bg-white dark:bg-zinc-900 focus-within:ring-2 focus-within:ring-accent/10 focus-within:border-accent transition-all">
             <EditorContent editor={editor} />
           </div>
