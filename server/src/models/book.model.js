@@ -4,7 +4,15 @@ async function getAllBooks(page = 1, limit = 5) {
   const offset = (page - 1) * limit;
   // Get paginated rows with new fields
   const { rows } = await db.query(
-    "SELECT id, title, author, description, isbn, cover_url, published_year FROM books ORDER BY id LIMIT $1 OFFSET $2",
+    `SELECT 
+       b.id, b.title, b.author, b.description, b.isbn, b.cover_url, b.published_year,
+       COALESCE(ROUND(AVG(r.rating), 1), 0) as avg_rating,
+       COUNT(r.id) as review_count
+     FROM books b
+     LEFT JOIN reviews r ON b.id = r.book_id
+     GROUP BY b.id
+     ORDER BY b.id 
+     LIMIT $1 OFFSET $2`,
     [limit, offset]
   );
 
@@ -30,7 +38,15 @@ async function deleteBookById(id) {
 
 async function searchBooks(query) {
   const { rows } = await db.query(
-    "SELECT id, title, author, description, isbn, cover_url, published_year FROM books WHERE title ILIKE $1 OR author ILIKE $1 ORDER BY id",
+    `SELECT 
+       b.id, b.title, b.author, b.description, b.isbn, b.cover_url, b.published_year,
+       COALESCE(ROUND(AVG(r.rating), 1), 0) as avg_rating,
+       COUNT(r.id) as review_count
+     FROM books b
+     LEFT JOIN reviews r ON b.id = r.book_id
+     WHERE b.title ILIKE $1 OR b.author ILIKE $1
+     GROUP BY b.id
+     ORDER BY b.id`,
     [`%${query}%`]
   );
   return rows;
