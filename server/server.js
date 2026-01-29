@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const compression = require("compression");
 require("dotenv").config();
 
 // Routes
@@ -16,6 +17,7 @@ const app = express(); // Express
 
 app.use(helmet()); // Security
 app.use(morgan("dev")); // Logging
+app.use(compression()); // Compress all responses
 
 // CORS Configuration - Allow frontend URLs in production
 const allowedOrigins = [
