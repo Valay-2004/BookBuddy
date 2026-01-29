@@ -44,7 +44,7 @@ export default function Books() {
       if (!cover_url) {
         cover_url = `https://covers.openlibrary.org/b/title/${encodeURIComponent(
           book.title,
-        )}-L.jpg`;
+        )}-M.jpg`;
       }
       return {
         ...book,
@@ -92,17 +92,8 @@ export default function Books() {
     }
   };
 
-  // Fetch reviews for visible books
-  useEffect(() => {
-    books.forEach(async (book) => {
-      try {
-        const { data } = await API.get(`/books/${book.id}/reviews`);
-        setBookReviews((prev) => ({ ...prev, [book.id]: data || [] }));
-      } catch (e) {
-        console.error(e);
-      }
-    });
-  }, [books]);
+  // N+1 problem fixed: Reviews are now aggregated on the server in listBooks
+  // We only need to fetch reviews when the user actually views them or opens the review modal
 
   // Fetch top rated book for sidebar
   useEffect(() => {
