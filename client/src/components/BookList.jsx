@@ -60,10 +60,9 @@ export default function BookList({
     <div className="grid grid-cols-1 gap-8 mt-8">
       {books.map((book, index) => {
         // Calculate average rating from the reviews prop if available
-        const reviews = bookReviews[book.id] || [];
-        const avgRating = reviews.length
-          ? reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length
-          : 0;
+        // Use server-provided stats
+        const avgRating = parseFloat(book.avg_rating) || 0;
+        const reviewCount = parseInt(book.review_count) || 0;
 
         return (
           <motion.div
@@ -138,7 +137,7 @@ export default function BookList({
               {/* Footer Actions */}
               <div className="mt-auto pt-6 flex items-center justify-between">
                 <div className="flex items-center gap-4 text-xs text-zinc-500 font-medium">
-                  <span>{reviews.length} Reviews</span>
+                  <span>{reviewCount} Reviews</span>
                   <span className="w-1 h-1 bg-zinc-300 rounded-full" />
                   <span>
                     {book.published_year ? `Published ${book.published_year}` : "Publication year unknown"}
