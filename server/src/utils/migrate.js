@@ -90,6 +90,17 @@ async function runMigrations() {
     `);
     console.log("✅ Database schema is up to date.");
 
+    // optimize performance with indexes
+    console.log("Checking/Adding Indexes...");
+    await db.query(`
+      CREATE INDEX IF NOT EXISTS idx_books_title ON books(title);
+      CREATE INDEX IF NOT EXISTS idx_books_author ON books(author);
+      CREATE INDEX IF NOT EXISTS idx_reviews_book_id ON reviews(book_id);
+      CREATE INDEX IF NOT EXISTS idx_reviews_user_id ON reviews(user_id);
+      CREATE INDEX IF NOT EXISTS idx_reading_list_user_id ON reading_lists(user_id);
+    `);
+    console.log("✅ Indexes verified.");
+
   } catch (err) {
     console.error("❌ Migration failed:", err.message);
     // Don't crash the server, just log it. 
