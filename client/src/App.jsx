@@ -15,6 +15,7 @@ const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const Profile = lazy(() => import("./pages/Profile"));
 const ReadingLists = lazy(() => import("./pages/ReadingLists"));
+const BookDetails = lazy(() => import("./pages/BookDetails"));
 
 export default function App() {
   return (
@@ -30,6 +31,7 @@ export default function App() {
               <Route path="/signup" element={<Signup />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/reading-lists" element={<ReadingLists />} />
+              <Route path="/book/:id" element={<BookDetails />} />
             </Routes>
           </Suspense>
         </main>
