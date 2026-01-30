@@ -1,4 +1,4 @@
-const { getAllBooks, createBook, deleteBookById, searchBooks: searchModel, getTopRatedBook } = require("../models/book.model");
+const { getAllBooks, createBook, deleteBookById, searchBooks: searchModel, getTopRatedBook, getBookById: getBookModelById } = require("../models/book.model");
 // console.log(require("../models/book.model"));
 async function listBooks(req, res) {
   try {
@@ -67,4 +67,19 @@ async function getTopRated(req, res) {
   }
 }
 
-module.exports = { listBooks, addBook, deleteBook, searchBooks, getTopRated };
+async function getBookById(req, res) {
+  try {
+    const { id } = req.params;
+    const book = await getBookModelById(id);
+    if (book) {
+      res.json({ success: true, book });
+    } else {
+      res.status(404).json({ success: false, error: "Book not found" });
+    }
+  } catch (err) {
+    console.error("Error fetching book by ID:", err);
+    res.status(500).json({ success: false, error: "Failed to fetch book" });
+  }
+}
+
+module.exports = { listBooks, addBook, deleteBook, searchBooks, getTopRated, getBookById };
