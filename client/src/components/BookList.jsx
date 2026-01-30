@@ -27,6 +27,7 @@ export default function BookList({
   onOpenReview,
   onViewReviews,
   onDelete,
+  onCardClick,
 }) {
   if (isLoading) {
     return (
@@ -70,7 +71,8 @@ export default function BookList({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
-            className="group flex flex-col sm:flex-row gap-6 p-4 sm:p-6 bg-white dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800 hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-black/30 transition-all duration-300"
+            onClick={() => onCardClick?.(book.id)}
+            className="group flex flex-col sm:flex-row gap-6 p-4 sm:p-6 bg-white dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800 hover:shadow-xl hover:shadow-zinc-200/50 dark:hover:shadow-black/30 transition-all duration-300 cursor-pointer"
           >
             {/* Thumbnail */}
             <div className="shrink-0 relative">
@@ -120,7 +122,10 @@ export default function BookList({
                 {/* Admin Actions */}
                 {user?.role === "admin" && (
                   <button
-                    onClick={() => onDelete(book.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(book.id);
+                    }}
                     className="p-2 text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-full transition-colors"
                   >
                     <Trash2 size={18} />
@@ -129,10 +134,11 @@ export default function BookList({
               </div>
 
               {/* Description / Blurb */}
-              <div className="mt-4 text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed line-clamp-3 md:line-clamp-4 font-sans">
-                {book.description ||
-                  "No description available for this title. Adding a description helps readers understand the context of the book."}
-              </div>
+              {/* Description / Blurb */}
+              <div 
+                className="mt-4 text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed line-clamp-3 md:line-clamp-4 font-sans"
+                dangerouslySetInnerHTML={{ __html: book.description || "No description available." }}
+              />
 
               {/* Footer Actions */}
               <div className="mt-auto pt-6 flex items-center justify-between">
@@ -147,13 +153,19 @@ export default function BookList({
                 <div className="flex gap-3">
                   <Button
                     variant="secondary"
-                    onClick={() => onViewReviews(book.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewReviews(book.id);
+                    }}
                   >
                     View Reviews
                   </Button>
                   <Button
                     variant="primary"
-                    onClick={() => onOpenReview(book.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenReview(book.id);
+                    }}
                   >
                     <MessageCircle size={16} />
                     Review
