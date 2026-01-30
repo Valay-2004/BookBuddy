@@ -1,6 +1,6 @@
 const express = require("express");
 const { body, validationResult } = require("express-validator");
-const { listBooks, addBook, deleteBook, searchBooks, getTopRated } = require("../controllers/book.controller");
+const { listBooks, addBook, deleteBook, searchBooks, getTopRated, getBookById } = require("../controllers/book.controller");
 const authenticate = require("../middleware/auth");
 const { authorizeRole } = require("../middleware/auth"); // Fixing the import
 const router = express.Router();
@@ -34,6 +34,7 @@ const handleValidationErrors = (req, res, next) => {
 router.get("/", listBooks);
 router.get("/search", searchBooks);
 router.get("/top-rated", getTopRated);
+router.get("/:id", getBookById);
 
 // Protected routes
 router.post(
