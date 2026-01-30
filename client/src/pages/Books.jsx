@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 import { Plus, Search } from "lucide-react";
 
@@ -109,7 +110,21 @@ export default function Books() {
       }
     };
     fetchTopRated();
+    fetchTopRated();
   }, []);
+
+  const [trendingBooks, setTrendingBooks] = useState([]);
+
+  useEffect(() => {
+    import("../services/openLibrary").then(({ fetchTrendingBooks }) => {
+      fetchTrendingBooks().then(setTrendingBooks);
+    });
+  }, []);
+
+  const navigate = useNavigate();
+  const handleBookClick = (bookId) => {
+     navigate(`/book/${bookId}`);
+  };
 
   const handleAddBook = async (bookData) => {
     setIsSubmitting(true);
@@ -242,6 +257,7 @@ export default function Books() {
               onOpenReview={setReviewOpenFor}
               onViewReviews={setViewReviewsFor}
               onDelete={setDeleteConfirmId}
+              onCardClick={handleBookClick}
             />
 
             {/* Pagination */}
@@ -263,6 +279,7 @@ export default function Books() {
             </div>
           </div>
 
+
           {/* Sidebar: 4 Columns (Kirkus style "Trending" or "Featured") */}
           <div className="hidden lg:block lg:col-span-4 space-y-8">
             <div className="sticky top-24">
@@ -272,7 +289,11 @@ export default function Books() {
                 </h3>
                 <div className="relative aspect-[2/3] mb-4 w-full overflow-hidden rounded-lg shadow-md group">
                   <img
-                    src={topRatedBook?.cover_url || books[0]?.cover_url || "/covers/fallback-book.png"}
+                    src={
+                      topRatedBook?.cover_url?.replace("-M.jpg", "-L.jpg") ||
+                      books[0]?.cover_url?.replace("-M.jpg", "-L.jpg") ||
+                      "/covers/fallback-book.png"
+                    }
                     alt={topRatedBook?.title || books[0]?.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     onError={(e) => {
@@ -282,14 +303,17 @@ export default function Books() {
                   />
                 </div>
                 <h4 className="font-bold text-lg leading-tight">
-                  {topRatedBook?.title || books[0]?.title || "Seeking Recommendations..."}
+                  {topRatedBook?.title ||
+                    books[0]?.title ||
+                    "Seeking Recommendations..."}
                 </h4>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
                   by {topRatedBook?.author || books[0]?.author || "Unknown"}
                 </p>
                 {(topRatedBook?.published_year || books[0]?.published_year) && (
                   <p className="text-xs text-zinc-400 mt-1">
-                    Published {topRatedBook?.published_year || books[0]?.published_year}
+                    Published{" "}
+                    {topRatedBook?.published_year || books[0]?.published_year}
                   </p>
                 )}
               </div>
@@ -299,21 +323,37 @@ export default function Books() {
                   Trending Now
                 </h3>
                 <ul className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <li key={i} className="flex gap-3 group cursor-pointer">
-                      <span className="text-2xl font-black text-zinc-200 group-hover:text-accent transition-colors">
-                        0{i}
-                      </span>
-                      <div>
-                        <p className="font-bold text-sm group-hover:underline">
-                          Demon Copperhead
-                        </p>
-                        <p className="text-xs text-zinc-500">
-                          Barbara Kingsolver
-                        </p>
-                      </div>
-                    </li>
-                  ))}
+                  {trendingBooks.length > 0
+                    ? trendingBooks.map((book, i) => (
+                        <li
+                          key={book.id || i}
+                          className="flex gap-3 group cursor-pointer"
+                          onClick={() => handleBookClick(book.id)} // Will need handleBookClick
+                        >
+                          <span className="text-2xl font-black text-zinc-200 group-hover:text-accent transition-colors">
+                            0{i + 1}
+                          </span>
+                          <div>
+                            <p className="font-bold text-sm group-hover:underline line-clamp-2">
+                              {book.title}
+                            </p>
+                            <p className="text-xs text-zinc-500">
+                              {book.author}
+                            </p>
+                          </div>
+                        </li>
+                      ))
+                    : [1, 2, 3].map((i) => (
+                        <li key={i} className="flex gap-3 group animate-pulse">
+                          <span className="text-2xl font-black text-zinc-200">
+                            0{i}
+                          </span>
+                          <div className="space-y-2">
+                            <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                            <div className="h-3 w-20 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                          </div>
+                        </li>
+                      ))}
                 </ul>
               </div>
             </div>
