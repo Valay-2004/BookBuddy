@@ -68,4 +68,19 @@ async function getTopRatedBook() {
   return rows[0];
 }
 
-module.exports = { getAllBooks, createBook, deleteBookById, searchBooks, getTopRatedBook };
+async function getBookById(id) {
+  const { rows } = await db.query(
+    `SELECT 
+       b.id, b.title, b.author, b.description, b.isbn, b.cover_url, b.published_year,
+       COALESCE(ROUND(AVG(r.rating), 1), 0) as avg_rating,
+       COUNT(r.id) as review_count
+     FROM books b
+     LEFT JOIN reviews r ON b.id = r.book_id
+     WHERE b.id = $1
+     GROUP BY b.id`,
+    [id]
+  );
+  return rows[0];
+}
+
+module.exports = { getAllBooks, createBook, deleteBookById, searchBooks, getTopRatedBook, getBookById };
