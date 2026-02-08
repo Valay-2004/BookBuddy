@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, BookOpen, X, List } from "lucide-react";
+import toast from "react-hot-toast";
+import { Plus, BookOpen, X, List, Trash2 } from "lucide-react";
 import { readingListAPI } from "../services/api";
-import { Button, Input, Label, Textarea, Badge } from "../components/ui/Core";
+import { Button, Input, Label, Textarea, Badge, Skeleton } from "../components/ui/Core";
 
 export default function ReadingLists() {
   const [lists, setLists] = useState([]);
@@ -60,11 +61,52 @@ export default function ReadingLists() {
     }
   };
 
+  const handleRemoveBook = async (bookId) => {
+    if (!selectedList) return;
+    
+    // Optimistic Update: Remove book from local state instantly
+    const previousBooks = [...listBooks];
+    setListBooks(listBooks.filter(b => b.id !== bookId));
+    
+    try {
+      await readingListAPI.removeBook(selectedList.id, bookId);
+      toast.success("Removed from list");
+    } catch (error) {
+      console.error("Failed to remove book", error);
+      toast.error("Failed to remove book");
+      // Rollback if server fails
+      setListBooks(previousBooks);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse font-serif text-zinc-400">
-          Loading collections...
+      <div className="min-h-screen bg-paper dark:bg-dark-paper p-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-end mb-12 border-b border-zinc-200 dark:border-zinc-800 pb-6">
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-48" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <Skeleton className="h-10 w-32" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-6 rounded-xl space-y-4">
+                <div className="flex justify-between items-start">
+                  <Skeleton className="h-10 w-10 rounded-lg" />
+                  <Skeleton className="h-6 w-16" />
+                </div>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+                <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex justify-between">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -182,7 +224,17 @@ export default function ReadingLists() {
                 {isDetailsLoading ? (
                   <div className="space-y-4 py-8">
                     {[1, 2, 3].map((n) => (
-                      <div key={n} className="h-20 bg-zinc-100 dark:bg-zinc-800/50 rounded-xl animate-pulse" />
+                      <div key={n} className="flex gap-4 p-4 bg-white dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                        <Skeleton className="w-16 h-24 shrink-0 rounded" />
+                        <div className="flex-1 space-y-2">
+                          <Skeleton className="h-4 w-1/2" />
+                          <Skeleton className="h-3 w-1/4" />
+                          <div className="pt-2 space-y-1">
+                            <Skeleton className="h-3 w-full" />
+                            <Skeleton className="h-3 w-3/4" />
+                          </div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                 ) : listBooks.length === 0 ? (
@@ -209,9 +261,21 @@ export default function ReadingLists() {
                           />
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-bold text-ink dark:text-white group-hover:text-accent transition-colors">
-                            {book.title}
-                          </h4>
+                          <div className="flex justify-between items-start">
+                            <h4 className="font-bold text-ink dark:text-white group-hover:text-accent transition-colors">
+                              {book.title}
+                            </h4>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveBook(book.id);
+                              }}
+                              className="text-zinc-300 hover:text-red-500 transition-colors"
+                              title="Remove from list"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                           <p className="text-xs text-zinc-500 mb-2">by {book.author}</p>
                           <div 
                             className="text-xs text-zinc-400 line-clamp-2 leading-relaxed"

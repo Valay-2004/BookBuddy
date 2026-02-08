@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 
 import API from "../services/api";
 import { fetchBookDetails } from "../services/openLibrary";
-import { Button } from "../components/ui/Core";
+import { Skeleton, Button } from "../components/ui/Core";
 import { useAuth } from "../context/AuthContext";
 
 export default function BookDetails() {
@@ -90,8 +90,36 @@ export default function BookDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-paper dark:bg-dark-paper">
-        <Loader className="animate-spin text-accent" size={48} />
+      <div className="min-h-screen bg-paper dark:bg-dark-paper py-12 px-4 sm:px-6 lg:px-8 transition-colors duration-300">
+        <div className="max-w-4xl mx-auto">
+          <Skeleton className="h-10 w-24 mb-8" />
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-xl overflow-hidden border border-zinc-100 dark:border-zinc-800">
+            <div className="md:flex">
+              <div className="md:w-1/3 bg-zinc-50 dark:bg-zinc-950 p-8 flex items-center justify-center border-b md:border-b-0 md:border-r border-zinc-100 dark:border-zinc-800">
+                <Skeleton className="w-48 aspect-[2/3] rounded-lg" />
+              </div>
+              <div className="p-8 md:w-2/3 space-y-6">
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-3/4" />
+                  <Skeleton className="h-4 w-1/4" />
+                </div>
+                <div className="flex gap-4 border-b border-zinc-100 dark:border-zinc-800 pb-6">
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="space-y-4">
+                  <Skeleton className="h-6 w-32" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -140,32 +168,64 @@ export default function BookDetails() {
 
                 {/* Details Side */}
                 <div className="p-8 md:w-2/3">
-                    <h1 className="text-4xl font-serif font-black text-ink dark:text-white mb-2 leading-tight">
-                        {book.title}
-                    </h1>
-                    
-                    <div className="flex flex-wrap items-center gap-6 text-zinc-500 dark:text-zinc-400 mb-8 border-b border-zinc-100 dark:border-zinc-800 pb-6">
-                        <div className="flex items-center gap-2">
-                             <User size={18} />
-                             <span className="font-medium">{book.author}</span>
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-6">
+                        <div className="flex-1">
+                            <h1 className="text-4xl font-serif font-black text-ink dark:text-white mb-2 leading-tight">
+                                {book.title}
+                            </h1>
+                            
+                            <div className="flex flex-wrap items-center gap-6 text-zinc-500 dark:text-zinc-400">
+                                <div className="flex items-center gap-2">
+                                     <User size={18} />
+                                     <span className="font-medium">{book.author}</span>
+                                </div>
+                                {book.published_year && (
+                                     <div className="flex items-center gap-2">
+                                        <Calendar size={18} />
+                                        <span>{book.published_year}</span>
+                                     </div>
+                                )}
+                            </div>
                         </div>
-                        {book.published_year && (
-                             <div className="flex items-center gap-2">
-                                <Calendar size={18} />
-                                <span>{book.published_year}</span>
-                             </div>
+
+                        {/* Action Buttons - Prominent Top Right */}
+                        {(book.read_url || book.buy_url) && (
+                            <div className="flex flex-col gap-3 lg:min-w-[200px]">
+                                {book.read_url && (
+                                    <Button 
+                                        onClick={() => window.open(book.read_url, "_blank")}
+                                        className="bg-accent hover:bg-accent/90 text-white font-bold flex items-center justify-center gap-2 py-6 text-lg shadow-lg"
+                                    >
+                                        <BookOpen size={20} />
+                                        Read Online
+                                        <ExternalLink size={16} className="opacity-70" />
+                                    </Button>
+                                )}
+                                {book.buy_url && (
+                                    <Button 
+                                        variant="outline"
+                                        onClick={() => window.open(book.buy_url, "_blank")}
+                                        className="border-2 border-accent text-accent hover:bg-accent/5 font-bold flex items-center justify-center gap-2 py-6 text-lg"
+                                    >
+                                        <ShoppingCart size={20} />
+                                        Buy Book
+                                        <ExternalLink size={16} className="opacity-70" />
+                                    </Button>
+                                )}
+                            </div>
                         )}
-                        {/* Rating could go here if available */}
                     </div>
 
-                    <div className="prose dark:prose-invert prose-lg max-w-none text-zinc-600 dark:text-zinc-300 font-sans leading-relaxed">
-                        <h3 className="text-lg font-bold font-serif text-ink dark:text-white mb-4 flex items-center gap-2">
-                            <BookOpen size={20} className="text-accent" />
-                            Synopsis
-                        </h3>
-                        <ReactMarkdown rehypePlugins={[rehypeRaw]}>
-                            {book.description || "*No description available.*"}
-                        </ReactMarkdown>
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 pt-6">
+                        <div className="prose dark:prose-invert prose-lg max-w-none text-zinc-600 dark:text-zinc-300 font-sans leading-relaxed">
+                            <h3 className="text-lg font-bold font-serif text-ink dark:text-white mb-4 flex items-center gap-2">
+                                <BookOpen size={20} className="text-accent" />
+                                Synopsis
+                            </h3>
+                            <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                                {book.description || "*No description available.*"}
+                            </ReactMarkdown>
+                        </div>
                     </div>
                 </div>
             </div>

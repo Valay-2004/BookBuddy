@@ -78,30 +78,51 @@ const initialBooksState = {
   isReviewSubmitting: false,
 };
 
+import { useSearchParams } from "react-router-dom";
+
+// ... (imports remain the same)
+
 export default function Books() {
   const { user, token } = useAuth();
-  const [state, dispatch] = useReducer(booksReducer, initialBooksState);
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Initialize state from URL params
+  const initialPage = parseInt(searchParams.get("page") || "1", 10);
+  const initialSearch = searchParams.get("search") || "";
+
+  const [state, dispatch] = useReducer(booksReducer, {
+    ...initialBooksState,
+    page: initialPage,
+    searchTerm: initialSearch,
+    // If there's a search term, we should probably be in "searching" mode initially, 
+    // but the effect will handle the fetch.
+  });
+
+  // Sync URL with state changes
+  useEffect(() => {
+    const params = {};
+    if (state.page > 1) params.page = state.page;
+    if (state.searchTerm) params.search = state.searchTerm;
+    setSearchParams(params, { replace: true });
+  }, [state.page, state.searchTerm, setSearchParams]);
 
   const attachCoverUrls = (books) => {
+    // ... (same as before)
     return books.map((book) => {
-      // Priority: 1) Database cover_url, 2) Open Library API, 3) Fallback
       let cover_url = book.cover_url;
       if (!cover_url) {
         cover_url = `https://covers.openlibrary.org/b/title/${encodeURIComponent(
           book.title,
         )}-M.jpg`;
       }
-      return {
-        ...book,
-        cover_url,
-      };
+      return { ...book, cover_url };
     });
   };
 
   const fetchBooks = useCallback(async (pageNum) => {
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      const { data } = await API.get(`/books?page=${pageNum}&limit=5`); // Lower limit for list view
+      const { data } = await API.get(`/books?page=${pageNum}&limit=5`);
       const booksWithCovers = attachCoverUrls(data.books);
       dispatch({ type: "SET_BOOKS", payload: { books: booksWithCovers, totalPages: data.totalPages } });
     } catch (err) {
@@ -111,6 +132,7 @@ export default function Books() {
     }
   }, []);
 
+  // Handle Search & Initial Load
   useEffect(() => {
     if (state.searchTerm) {
       const delayDebounceFn = setTimeout(() => {
@@ -118,6 +140,7 @@ export default function Books() {
       }, 500);
       return () => clearTimeout(delayDebounceFn);
     } else {
+      // If no search term, fetch normal list
       fetchBooks(state.page);
     }
   }, [state.searchTerm, state.page, fetchBooks]);
