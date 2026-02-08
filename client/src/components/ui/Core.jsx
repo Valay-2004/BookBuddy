@@ -170,6 +170,15 @@ export function Badge({ children, variant = "neutral" }) {
 
 // --- Feedback & Utilities ---
 
+export function Skeleton({ className, ...props }) {
+  return (
+    <div
+      className={cn("animate-pulse rounded-md bg-zinc-200 dark:bg-zinc-800", className)}
+      {...props}
+    />
+  );
+}
+
 export function PageLoader() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">

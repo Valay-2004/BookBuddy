@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
-import { Star, MessageCircle, Trash2, BookOpen } from "lucide-react";
-import { Button, Badge } from "./ui/Core";
+import { Star, MessageCircle, Trash2, BookOpen, ExternalLink, ShoppingCart } from "lucide-react";
+import { Skeleton, Button, Badge } from "./ui/Core";
 
 // Helper for Star Rating Display
 const StarRating = ({ rating }) => (
@@ -31,14 +31,30 @@ export default function BookList({
 }) {
   if (isLoading) {
     return (
-      <div className="space-y-6 animate-pulse mt-8">
+      <div className="grid grid-cols-1 gap-8 mt-8">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="flex gap-6 h-48">
-            <div className="w-32 bg-zinc-200 dark:bg-zinc-800 rounded-lg shrink-0" />
-            <div className="flex-1 space-y-4 py-2">
-              <div className="h-6 w-3/4 bg-zinc-200 dark:bg-zinc-800 rounded" />
-              <div className="h-4 w-1/2 bg-zinc-200 dark:bg-zinc-800 rounded" />
-              <div className="h-20 w-full bg-zinc-100 dark:bg-zinc-800/50 rounded" />
+          <div key={i} className="flex flex-col sm:flex-row gap-6 p-6 bg-white dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+            <Skeleton className="w-32 sm:w-40 aspect-2/3 rounded-lg shrink-0" />
+            <div className="flex-1 space-y-4">
+              <div className="flex justify-between">
+                <div className="space-y-2 w-full">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-8 w-3/4" />
+                  <Skeleton className="h-4 w-1/4" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+              <div className="flex justify-between items-center pt-4">
+                <Skeleton className="h-4 w-32" />
+                <div className="flex gap-2">
+                  <Skeleton className="h-10 w-28" />
+                  <Skeleton className="h-10 w-24" />
+                </div>
+              </div>
             </div>
           </div>
         ))}
@@ -117,6 +133,20 @@ export default function BookList({
                   <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1 uppercase tracking-wide">
                     by {book.author}
                   </p>
+                  {(book.read_url || book.buy_url) && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                       {book.read_url && (
+                         <div title="Available to Read Online" className="text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold flex items-center gap-1">
+                            <BookOpen size={10} /> Read
+                         </div>
+                       )}
+                       {book.buy_url && (
+                         <div title="Buy Online" className="text-blue-500 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold flex items-center gap-1">
+                            <ShoppingCart size={10} /> Buy
+                         </div>
+                       )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Admin Actions */}
