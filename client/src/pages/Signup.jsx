@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { User, Mail, Lock, MapPin, Loader2, ArrowRight } from "lucide-react";
@@ -7,31 +7,29 @@ import API from "../services/api";
 
 export default function Signup() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    address: "",
-  });
 
-  const handleChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  // Signup action for useActionState
+  const signupAction = async (previousState, formData) => {
+    const signupData = {
+      name: formData.get("name"),
+      email: formData.get("email"),
+      password: formData.get("password"),
+      address: formData.get("address"),
+    };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
     try {
-      await API.post("/auth/signup", formData);
+      await API.post("/auth/signup", signupData);
       toast.success("Account created! Redirecting...");
       setTimeout(() => navigate("/login"), 1500);
+      return { error: null };
     } catch (err) {
-      toast.error(err.response?.data?.error || "Signup failed");
-    } finally {
-      setLoading(false);
+      const errorMessage = err.response?.data?.error || "Signup failed";
+      toast.error(errorMessage);
+      return { error: errorMessage };
     }
   };
+
+  const [, formAction, isPending] = useActionState(signupAction, { error: null });
 
   const quotes = [
     { text: "A room without books is like a body without a soul.", author: "Cicero" },
@@ -82,7 +80,7 @@ return (
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form action={formAction} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-zinc-300 ml-1">Full Name</label>
@@ -90,9 +88,8 @@ return (
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500 group-focus-within:text-brand-400 transition-colors" />
                   <input
                     type="text"
+                    name="name"
                     required
-                    value={formData.name}
-                    onChange={(e) => handleChange("name", e.target.value)}
                     className="w-full bg-black/40 border border-zinc-800 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-all focus:ring-4 focus:ring-brand-500/10"
                     placeholder="John Doe"
                   />
@@ -105,9 +102,8 @@ return (
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500 group-focus-within:text-brand-400 transition-colors" />
                   <input
                     type="email"
+                    name="email"
                     required
-                    value={formData.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
                     className="w-full bg-black/40 border border-zinc-800 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-all focus:ring-4 focus:ring-brand-500/10"
                     placeholder="john@example.com"
                   />
@@ -121,9 +117,8 @@ return (
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500 group-focus-within:text-brand-400 transition-colors" />
                 <input
                   type="password"
+                  name="password"
                   required
-                  value={formData.password}
-                  onChange={(e) => handleChange("password", e.target.value)}
                   className="w-full bg-black/40 border border-zinc-800 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-all focus:ring-4 focus:ring-brand-500/10"
                   placeholder="••••••••"
                 />
@@ -136,8 +131,7 @@ return (
                 <MapPin className="absolute left-4 top-4 h-5 w-5 text-zinc-500 group-focus-within:text-brand-400 transition-colors" />
                 <textarea
                   rows={2}
-                  value={formData.address}
-                  onChange={(e) => handleChange("address", e.target.value)}
+                  name="address"
                   className="w-full bg-black/40 border border-zinc-800 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-all resize-none focus:ring-4 focus:ring-brand-500/10"
                   placeholder="Where should we send your physical copies?"
                 />
@@ -146,10 +140,10 @@ return (
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isPending}
               className="w-full bg-gradient-to-r from-accent to-brand-500 hover:from-brand-600 hover:to-accent text-white font-bold py-3 rounded-2xl shadow-xl shadow-brand-500/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 mt-2 group"
             >
-              {loading ? (
+              {isPending ? (
                 <Loader2 className="animate-spin h-5 w-5" />
               ) : (
                 <>

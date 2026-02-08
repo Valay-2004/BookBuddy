@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { login as loginService } from "../services/auth";
 import { useAuth } from "../context/AuthContext";
@@ -6,39 +6,38 @@ import { motion } from "motion/react";
 import { Mail, Lock, Loader2, ArrowRight } from "lucide-react";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  
+  // Use useRef for form inputs to avoid re-renders on every keystroke
+  const emailRef = useRef(null);
+  const passwordRef = useRef(null);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+  // Login action for useActionState
+  const loginAction = async (previousState, formData) => {
+    const email = formData.get("email");
+    const password = formData.get("password");
 
     try {
       const data = await loginService({ email, password });
       login(data.user, data.token);
       navigate("/profile", { replace: true });
+      return { error: null };
     } catch (err) {
       // Better error handling for different scenarios
       if (err.response?.status === 400) {
-        setError(err.response.data.error || "Invalid email or password");
+        return { error: err.response.data.error || "Invalid email or password" };
       } else if (err.response?.status === 500) {
-        setError("Server error. Please try again later.");
+        return { error: "Server error. Please try again later." };
       } else if (err.message === "Network Error") {
-        setError("Unable to connect to server. Check your connection.");
+        return { error: "Unable to connect to server. Check your connection." };
       } else {
-        setError(
-          err.response?.data?.error || "Login failed. Please try again.",
-        );
+        return { error: err.response?.data?.error || "Login failed. Please try again." };
       }
-    } finally {
-      setIsLoading(false);
     }
   };
+
+  const [state, formAction, isPending] = useActionState(loginAction, { error: null });
 
   const quotes = [
     { text: "A room without books is like a body without a soul.", author: "Cicero" },
@@ -87,7 +86,7 @@ return (
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form action={formAction} className="space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium text-zinc-300 ml-1">
                 Email Address
@@ -96,8 +95,8 @@ return (
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500 group-focus-within:text-brand-400 transition-colors" />
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  name="email"
+                  ref={emailRef}
                   className="w-full bg-black/40 border border-zinc-800 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-all focus:ring-4 focus:ring-brand-500/10"
                   placeholder="name@example.com"
                   required
@@ -113,8 +112,8 @@ return (
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-500 group-focus-within:text-brand-400 transition-colors" />
                 <input
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  name="password"
+                  ref={passwordRef}
                   className="w-full bg-black/40 border border-zinc-800 rounded-2xl py-3.5 pl-12 pr-4 text-white placeholder-zinc-600 focus:outline-none focus:border-brand-500 transition-all focus:ring-4 focus:ring-brand-500/10"
                   placeholder="••••••••"
                   required
@@ -122,22 +121,22 @@ return (
               </div>
             </div>
 
-            {error && (
+            {state.error && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="p-3 text-sm text-red-400 bg-red-950/20 border border-red-500/20 rounded-xl text-center"
               >
-                {error}
+                {state.error}
               </motion.div>
             )}
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isPending}
               className="w-full bg-gradient-to-r from-accent to-brand-500 hover:from-brand-600 hover:to-accent text-white font-bold py-3 rounded-2xl shadow-xl shadow-brand-500/20 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 mt-2 group"
             >
-              {isLoading ? (
+              {isPending ? (
                 <Loader2 className="animate-spin h-5 w-5" />
               ) : (
                 <>
