@@ -11,14 +11,14 @@ Built with a modern technology stack, it features a responsive and aesthetic use
 *   **Reading Lists**: Create, manage, and curate personal reading lists (public or private).
 *   **Reviews & Ratings**: Rate books and write detailed reviews using a rich text editor.
 *   **Responsive Design**: A beautiful, mobile-first interface built with Tailwind CSS and Radix UI.
-*   **Admin Dashboard**: (If applicable) Administrative tools to manage the book database.
+*   **Admin Dashboard**: Administrative tools to manage the book database.
 
 ## 🛠️ Technology Stack
 
 ### Frontend (`/client`)
 *   **Framework**: [React](https://react.dev/) with [Vite](https://vitejs.dev/)
 *   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-*   **UI Components**: [Radix UI](https://www.radix-ui.com/) (Primitives), `lucide-react` (Icons)
+*   **UI Components**: [Radix UI](https://www.radix-ui.com/), `lucide-react` (Icons)
 *   **State Management & Data Fetching**: `axios`, `react-hook-form`, `zod`
 *   **Rich Text Editor**: [Tiptap](https://tiptap.dev/)
 *   **Routing**: `react-router-dom`
@@ -27,19 +27,17 @@ Built with a modern technology stack, it features a responsive and aesthetic use
 *   **Runtime**: [Node.js](https://nodejs.org/)
 *   **Framework**: [Express.js](https://expressjs.com/)
 *   **Database**: [PostgreSQL](https://www.postgresql.org/)
-*   **ORM**: `pg` (node-postgres)
 *   **Authentication**: JSON Web Tokens (JWT) & bcrypt
+*   **Security**: Helmet, CORS, Rate Limiting
 
 ## ⚙️ Prerequisites
 
 Before you begin, ensure you have the following installed:
-*   [Node.js](https://nodejs.org/) (v16 or higher)
+*   [Node.js](https://nodejs.org/) (v18 or higher)
 *   [PostgreSQL](https://www.postgresql.org/) (v13 or higher)
 *   [Git](https://git-scm.com/)
 
-## 📦 Installation & Setup
-
-Follow these steps to get the project running locally.
+## 📦 Local Development Setup
 
 ### 1. Clone the Repository
 
@@ -48,86 +46,157 @@ git clone <repository-url>
 cd BookBuddy
 ```
 
-### 2. Database Setup
+### 2. Backend Setup
 
-Ensure your PostgreSQL server is running. Then, create the database and tables using the provided SQL script.
-
-1.  Open your terminal and log into the Postgres shell:
-    ```bash
-    psql -U postgres
-    ```
-2.  Run the initialization script (adjust the path if necessary):
-    ```sql
-    \i database/init.sql
-    ```
-    *Alternatively, you can manually run the SQL commands found in `database/init.sql`.*
-
-### 3. Backend Setup
-
-Navigate to the server directory and install dependencies:
+Navigate to the server directory:
 
 ```bash
 cd server
 npm install
 ```
 
-**Configuration via Environment Variables**
+**Configure Environment Variables**
 
-Create a `.env` file in the `server` directory and add the following variables (adjust values to your local setup):
+Copy the example environment file and update it with your local settings:
+
+```bash
+cp .env.example .env
+```
+
+Update `.env` with your PostgreSQL credentials:
 
 ```env
-PORT=3000
 DB_USER=postgres
 DB_PASSWORD=your_password
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=bookbuddy_db
-JWT_SECRET=your_super_secret_key
+PORT=5000
+JWT_SECRET=your_super_secret_jwt_key
 FRONTEND_URL=http://localhost:5173
 ```
 
-Start the backend server:
+**Run Database Migrations**
+
+The application automatically runs migrations on startup. Simply start the server:
 
 ```bash
 npm run dev
-# Server should be running on http://localhost:3000
 ```
 
-### 4. Frontend Setup
+**Seed the Database** (Optional)
 
-Open a new terminal window, navigate to the client directory, and install dependencies:
+To populate your database with sample books from Open Library:
+
+```bash
+npm run seed
+```
+
+### 3. Frontend Setup
+
+Open a new terminal, navigate to the client directory:
 
 ```bash
 cd client
 npm install
 ```
 
+**Configure Environment Variables**
+
+Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+The default settings should work for local development. Update if needed:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+```
+
 Start the development server:
 
 ```bash
 npm run dev
-# Client should be running on http://localhost:5173
 ```
+
+The application will be available at `http://localhost:5173`
+
+## 🚀 Production Deployment
+
+### Backend Deployment (Render/Railway/Heroku)
+
+1. **Set Environment Variables** in your hosting platform:
+   ```env
+   NODE_ENV=production
+   DATABASE_URL=your_production_database_url
+   JWT_SECRET=your_production_secret
+   FRONTEND_URL=https://your-frontend-domain.com
+   ```
+
+2. **Build Command**: Not required (Node.js apps run directly)
+
+3. **Start Command**: `npm start`
+
+4. **Database**: Ensure your PostgreSQL database is provisioned. The app will automatically run migrations on startup.
+
+### Frontend Deployment (Vercel/Netlify)
+
+1. **Set Environment Variables**:
+   ```env
+   VITE_API_URL=https://your-backend-domain.com/api
+   ```
+
+2. **Build Command**: `npm run build`
+
+3. **Output Directory**: `dist`
+
+4. **Install Command**: `npm install`
 
 ## 📂 Project Structure
 
 ```bash
 BookBuddy/
-├── client/           # React frontend application
+├── client/              # React frontend application
 │   ├── src/
 │   │   ├── components/  # Reusable UI components
-│   │   ├── pages/       # Page views (Login, Signup, etc.)
-│   │   └── ...
+│   │   ├── pages/       # Page views
+│   │   ├── context/     # React contexts (Auth, Theme)
+│   │   └── services/    # API services
 │   └── package.json
-├── server/           # Express backend application
+├── server/              # Express backend application
 │   ├── src/
 │   │   ├── controllers/ # Request handlers
 │   │   ├── routes/      # API route definitions
-│   │   └── ...
+│   │   ├── middleware/  # Custom middleware
+│   │   ├── models/      # Database models
+│   │   └── utils/       # Utilities (seed, migrate)
 │   └── package.json
-└── database/         # Database initialization scripts
-    └── init.sql
+└── README.md
 ```
+
+## 🔧 API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - User login
+
+### Books
+- `GET /api/books` - List all books
+- `POST /api/books` - Create book (Admin only)
+- `GET /api/books/:id` - Get book details
+- `DELETE /api/books/:id` - Delete book (Admin only)
+
+### Reviews
+- `POST /api/books/:id/reviews` - Create review
+- `GET /api/books/:id/reviews` - Get book reviews
+
+### Reading Lists
+- `GET /api/reading-lists` - Get user's reading lists
+- `POST /api/reading-lists` - Create new list
+- `POST /api/reading-lists/:listId/books/:bookId` - Add book to list
+- `DELETE /api/reading-lists/:listId/books/:bookId` - Remove book from list
 
 ## 🤝 Contributing
 
