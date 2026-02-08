@@ -1,42 +1,86 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useReducer, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
-import { Plus, Search } from "lucide-react";
 
 import API from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 // Components
-import BookList from "../components/BookList"; // Replaces BookGrid
+import BookList from "../components/BookList"; 
 import AddBookForm from "../components/forms/AddBookForm";
 import ReviewModal from "../components/modals/ReviewModal";
 import ViewReviewsModal from "../components/modals/ViewReviewsModal";
 import DeleteConfirmModal from "../components/modals/DeleteConfirmModal";
-import { Button, Input } from "../components/ui/Core";
+import { Button } from "../components/ui/Core";
+import BooksHero from "../components/BooksHero";
+import EditorsPick from "../components/EditorsPick";
+import TrendingSidebar from "../components/TrendingSidebar";
+
+// Books reducer for complex state management
+const booksReducer = (state, action) => {
+  switch (action.type) {
+    case "SET_BOOKS":
+      return { ...state, books: action.payload.books, totalPages: action.payload.totalPages };
+    case "SET_LOADING":
+      return { ...state, loading: action.payload };
+    case "SET_SEARCHING":
+      return { ...state, isSearching: action.payload };
+    case "SET_PAGE":
+      return { ...state, page: action.payload };
+    case "SET_SEARCH_TERM":
+      return { ...state, searchTerm: action.payload };
+    case "SET_TOP_RATED":
+      return { ...state, topRatedBook: action.payload };
+    case "TOGGLE_ADD_FORM":
+      return { ...state, showAddForm: !state.showAddForm };
+    case "SET_ADD_FORM":
+      return { ...state, showAddForm: action.payload };
+    case "SET_SUBMITTING":
+      return { ...state, isSubmitting: action.payload };
+    case "SET_REVIEW_OPEN":
+      return { ...state, reviewOpenFor: action.payload };
+    case "SET_VIEW_REVIEWS":
+      return { ...state, viewReviewsFor: action.payload };
+    case "SET_DELETE_CONFIRM":
+      return { ...state, deleteConfirmId: action.payload };
+    case "SET_BOOK_REVIEWS":
+      return { ...state, bookReviews: { ...state.bookReviews, ...action.payload } };
+    case "SET_REVIEW_RATING":
+      return { ...state, reviewRating: action.payload };
+    case "SET_REVIEW_TEXT":
+      return { ...state, reviewText: action.payload };
+    case "SET_REVIEW_SUBMITTING":
+      return { ...state, isReviewSubmitting: action.payload };
+    case "RESET_REVIEW_FORM":
+      return { ...state, reviewRating: 5, reviewText: "", reviewOpenFor: null };
+    default:
+      return state;
+  }
+};
+
+const initialBooksState = {
+  books: [],
+  loading: true,
+  page: 1,
+  totalPages: 1,
+  searchTerm: "",
+  isSearching: false,
+  topRatedBook: null,
+  showAddForm: false,
+  isSubmitting: false,
+  reviewOpenFor: null,
+  viewReviewsFor: null,
+  deleteConfirmId: null,
+  bookReviews: {},
+  reviewRating: 5,
+  reviewText: "",
+  isReviewSubmitting: false,
+};
 
 export default function Books() {
   const { user, token } = useAuth();
-  const [books, setBooks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [topRatedBook, setTopRatedBook] = useState(null);
-
-  // UI States
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [reviewOpenFor, setReviewOpenFor] = useState(null);
-  const [viewReviewsFor, setViewReviewsFor] = useState(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
-
-  // Review Data
-  const [bookReviews, setBookReviews] = useState({});
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewText, setReviewText] = useState("");
-  const [isReviewSubmitting, setIsReviewSubmitting] = useState(false);
+  const [state, dispatch] = useReducer(booksReducer, initialBooksState);
 
   const attachCoverUrls = (books) => {
     return books.map((book) => {
@@ -55,41 +99,39 @@ export default function Books() {
   };
 
   const fetchBooks = useCallback(async (pageNum) => {
-    setLoading(true);
+    dispatch({ type: "SET_LOADING", payload: true });
     try {
       const { data } = await API.get(`/books?page=${pageNum}&limit=5`); // Lower limit for list view
       const booksWithCovers = attachCoverUrls(data.books);
-      setBooks(booksWithCovers);
-      setTotalPages(data.totalPages);
+      dispatch({ type: "SET_BOOKS", payload: { books: booksWithCovers, totalPages: data.totalPages } });
     } catch (err) {
       toast.error("Failed to load library");
     } finally {
-      setLoading(false);
+      dispatch({ type: "SET_LOADING", payload: false });
     }
   }, []);
 
   useEffect(() => {
-    if (searchTerm) {
+    if (state.searchTerm) {
       const delayDebounceFn = setTimeout(() => {
-        handleSearch(searchTerm);
+        handleSearch(state.searchTerm);
       }, 500);
       return () => clearTimeout(delayDebounceFn);
     } else {
-      fetchBooks(page);
+      fetchBooks(state.page);
     }
-  }, [searchTerm, page, fetchBooks]);
+  }, [state.searchTerm, state.page, fetchBooks]);
 
   const handleSearch = async (query) => {
-    setIsSearching(true);
+    dispatch({ type: "SET_SEARCHING", payload: true });
     try {
       const { data } = await API.get(`/books/search?q=${query}`);
       const booksWithCovers = attachCoverUrls(data.books);
-      setBooks(booksWithCovers);
-      setTotalPages(1); // Search results usually don't have pagination in this simple impl
+      dispatch({ type: "SET_BOOKS", payload: { books: booksWithCovers, totalPages: 1 } });
     } catch (err) {
       toast.error("Search failed");
     } finally {
-      setIsSearching(false);
+      dispatch({ type: "SET_SEARCHING", payload: false });
     }
   };
 
@@ -103,13 +145,12 @@ export default function Books() {
         const { data } = await API.get("/books/top-rated");
         if (data.book) {
           const [bookWithCover] = attachCoverUrls([data.book]);
-          setTopRatedBook(bookWithCover);
+          dispatch({ type: "SET_TOP_RATED", payload: bookWithCover });
         }
       } catch (e) {
         console.error("Top rated error", e);
       }
     };
-    fetchTopRated();
     fetchTopRated();
   }, []);
 
@@ -127,43 +168,41 @@ export default function Books() {
   };
 
   const handleAddBook = async (bookData) => {
-    setIsSubmitting(true);
+    dispatch({ type: "SET_SUBMITTING", payload: true });
     try {
       await API.post("/books", bookData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success("Book added!");
-      setShowAddForm(false);
+      dispatch({ type: "SET_ADD_FORM", payload: false });
       fetchBooks(1);
     } catch (err) {
       toast.error("Failed to add book");
     } finally {
-      setIsSubmitting(false);
+      dispatch({ type: "SET_SUBMITTING", payload: false });
     }
   };
 
   const handleReviewSubmit = async () => {
-    if (!reviewOpenFor) {
+    if (!state.reviewOpenFor) {
       toast.error("Book ID is missing");
       return;
     }
-    setIsReviewSubmitting(true);
+    dispatch({ type: "SET_REVIEW_SUBMITTING", payload: true });
     try {
-      await API.post(`/books/${reviewOpenFor}/reviews`, {
-        rating: reviewRating,
-        reviewText,
+      await API.post(`/books/${state.reviewOpenFor}/reviews`, {
+        rating: state.reviewRating,
+        reviewText: state.reviewText,
       });
       toast.success("Review posted");
       // Refresh reviews for this book
-      const { data } = await API.get(`/books/${reviewOpenFor}/reviews`);
-      setBookReviews((prev) => ({ ...prev, [reviewOpenFor]: data }));
-      setReviewOpenFor(null);
-      setReviewRating(5);
-      setReviewText("");
+      const { data } = await API.get(`/books/${state.reviewOpenFor}/reviews`);
+      dispatch({ type: "SET_BOOK_REVIEWS", payload: { [state.reviewOpenFor]: data } });
+      dispatch({ type: "RESET_REVIEW_FORM" });
     } catch (err) {
       toast.error(err.response?.data?.error || "Failed to post review");
     } finally {
-      setIsReviewSubmitting(false);
+      dispatch({ type: "SET_REVIEW_SUBMITTING", payload: false });
     }
   };
 
@@ -172,55 +211,17 @@ export default function Books() {
       <div className="editorial-container py-12">
         <Toaster position="bottom-right" />
 
-        {/* Hero Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-200 dark:border-zinc-800 pb-8 mb-8">
-          <div className="max-w-2xl">
-            <motion.h1
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-5xl md:text-6xl font-serif font-black text-ink dark:text-white mb-4 tracking-tighter"
-            >
-              The <span className="text-accent italic">Review</span>.
-            </motion.h1>
-            <p className="text-xl text-zinc-500 font-light max-w-lg">
-              Curated reading lists and honest critiques for the modern
-              bibliophile.
-            </p>
-          </div>
-
-          {/* Controls */}
-          <div className="flex items-center gap-3">
-            {/* Search Mockup */}
-              <motion.div 
-                className="relative hidden sm:block"
-                whileFocus={{ scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              >
-                <Search
-                  className={`absolute left-3 top-2.5 transition-colors duration-300 ${isSearching ? "text-accent animate-pulse" : "text-zinc-400"}`}
-                  size={18}
-                />
-                <input
-                  type="text"
-                  placeholder="Search titles..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/10 transition-all duration-300 w-64 focus:w-80"
-                />
-              </motion.div>
-
-            {user?.role === "admin" && (
-              <Button onClick={() => setShowAddForm(!showAddForm)}>
-                <Plus size={18} />
-                <span className="hidden sm:inline">Add Title</span>
-              </Button>
-            )}
-          </div>
-        </div>
+        <BooksHero 
+          user={user}
+          searchTerm={state.searchTerm}
+          isSearching={state.isSearching}
+          onSearchChange={(val) => dispatch({ type: "SET_SEARCH_TERM", payload: val })}
+          onToggleAddForm={() => dispatch({ type: "TOGGLE_ADD_FORM" })}
+        />
 
         {/* Add Form Collapse */}
         <AnimatePresence>
-          {showAddForm && (
+          {state.showAddForm && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
@@ -230,8 +231,8 @@ export default function Books() {
               <div className="p-6 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-200 dark:border-zinc-700">
                 <AddBookForm
                   onAdd={handleAddBook}
-                  onCancel={() => setShowAddForm(false)}
-                  isSubmitting={isSubmitting}
+                  onCancel={() => dispatch({ type: "SET_ADD_FORM", payload: false })}
+                  isSubmitting={state.isSubmitting}
                 />
               </div>
             </motion.div>
@@ -245,18 +246,18 @@ export default function Books() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold font-serif">Latest Releases</h2>
               <span className="text-sm text-zinc-400">
-                Showing page {page} of {totalPages}
+                Showing page {state.page} of {state.totalPages}
               </span>
             </div>
 
             <BookList
-              books={books}
-              isLoading={loading}
+              books={state.books}
+              isLoading={state.loading}
               user={user}
-              bookReviews={bookReviews}
-              onOpenReview={setReviewOpenFor}
-              onViewReviews={setViewReviewsFor}
-              onDelete={setDeleteConfirmId}
+              bookReviews={state.bookReviews}
+              onOpenReview={(id) => dispatch({ type: "SET_REVIEW_OPEN", payload: id })}
+              onViewReviews={(id) => dispatch({ type: "SET_VIEW_REVIEWS", payload: id })}
+              onDelete={(id) => dispatch({ type: "SET_DELETE_CONFIRM", payload: id })}
               onCardClick={handleBookClick}
             />
 
@@ -264,15 +265,15 @@ export default function Books() {
             <div className="flex justify-center gap-4 mt-16">
               <Button
                 variant="secondary"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
+                onClick={() => dispatch({ type: "SET_PAGE", payload: Math.max(1, state.page - 1) })}
+                disabled={state.page === 1}
               >
                 Previous
               </Button>
               <Button
                 variant="secondary"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
+                onClick={() => dispatch({ type: "SET_PAGE", payload: Math.min(state.totalPages, state.page + 1) })}
+                disabled={state.page === state.totalPages}
               >
                 Next
               </Button>
@@ -280,113 +281,48 @@ export default function Books() {
           </div>
 
 
-          {/* Sidebar: 4 Columns (Kirkus style "Trending" or "Featured") */}
+          {/* Sidebar: 4 Columns */}
           <div className="hidden lg:block lg:col-span-4 space-y-8">
             <div className="sticky top-24">
-              <div className="p-6 bg-accent/5 dark:bg-accent/10 rounded-2xl border border-accent/10">
-                <h3 className="text-lg font-bold font-serif mb-4 text-accent-hover">
-                  Editor's Pick
-                </h3>
-                <div className="relative aspect-[2/3] mb-4 w-full overflow-hidden rounded-lg shadow-md group">
-                  <img
-                    src={
-                      topRatedBook?.cover_url?.replace("-M.jpg", "-L.jpg") ||
-                      books[0]?.cover_url?.replace("-M.jpg", "-L.jpg") ||
-                      "/covers/fallback-book.png"
-                    }
-                    alt={topRatedBook?.title || books[0]?.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = "/covers/fallback-book.png";
-                    }}
-                  />
-                </div>
-                <h4 className="font-bold text-lg leading-tight">
-                  {topRatedBook?.title ||
-                    books[0]?.title ||
-                    "Seeking Recommendations..."}
-                </h4>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                  by {topRatedBook?.author || books[0]?.author || "Unknown"}
-                </p>
-                {(topRatedBook?.published_year || books[0]?.published_year) && (
-                  <p className="text-xs text-zinc-400 mt-1">
-                    Published{" "}
-                    {topRatedBook?.published_year || books[0]?.published_year}
-                  </p>
-                )}
-              </div>
-
-              <div className="mt-8">
-                <h3 className="text-lg font-bold font-serif mb-4 border-b pb-2">
-                  Trending Now
-                </h3>
-                <ul className="space-y-4">
-                  {trendingBooks.length > 0
-                    ? trendingBooks.map((book, i) => (
-                        <li
-                          key={book.id || i}
-                          className="flex gap-3 group cursor-pointer"
-                          onClick={() => handleBookClick(book.id)} // Will need handleBookClick
-                        >
-                          <span className="text-2xl font-black text-zinc-200 group-hover:text-accent transition-colors">
-                            0{i + 1}
-                          </span>
-                          <div>
-                            <p className="font-bold text-sm group-hover:underline line-clamp-2">
-                              {book.title}
-                            </p>
-                            <p className="text-xs text-zinc-500">
-                              {book.author}
-                            </p>
-                          </div>
-                        </li>
-                      ))
-                    : [1, 2, 3].map((i) => (
-                        <li key={i} className="flex gap-3 group animate-pulse">
-                          <span className="text-2xl font-black text-zinc-200">
-                            0{i}
-                          </span>
-                          <div className="space-y-2">
-                            <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-                            <div className="h-3 w-20 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-                          </div>
-                        </li>
-                      ))}
-                </ul>
-              </div>
+              <EditorsPick 
+                topRatedBook={state.topRatedBook} 
+                defaultBook={state.books[0]} 
+              />
+              <TrendingSidebar 
+                trendingBooks={trendingBooks} 
+                onBookClick={handleBookClick} 
+              />
             </div>
           </div>
         </div>
 
-        {/* Modals - Keeping your existing logic, just wrapping them */}
+        {/* Modals */}
         <ViewReviewsModal
-          isOpen={!!viewReviewsFor}
-          reviews={bookReviews[viewReviewsFor] || []}
-          onClose={() => setViewReviewsFor(null)}
+          isOpen={!!state.viewReviewsFor}
+          reviews={state.bookReviews[state.viewReviewsFor] || []}
+          onClose={() => dispatch({ type: "SET_VIEW_REVIEWS", payload: null })}
         />
 
         <ReviewModal
-          isOpen={!!reviewOpenFor}
-          rating={reviewRating}
-          reviewText={reviewText}
-          isSubmitting={isReviewSubmitting}
-          onRatingChange={setReviewRating}
-          onTextChange={setReviewText}
+          isOpen={!!state.reviewOpenFor}
+          rating={state.reviewRating}
+          reviewText={state.reviewText}
+          isSubmitting={state.isReviewSubmitting}
+          onRatingChange={(rating) => dispatch({ type: "SET_REVIEW_RATING", payload: rating })}
+          onTextChange={(text) => dispatch({ type: "SET_REVIEW_TEXT", payload: text })}
           onSubmit={handleReviewSubmit}
-          onClose={() => setReviewOpenFor(null)}
+          onClose={() => dispatch({ type: "RESET_REVIEW_FORM" })}
         />
 
         <DeleteConfirmModal
-          isOpen={!!deleteConfirmId}
-          isDeleting={loading}
+          isOpen={!!state.deleteConfirmId}
+          isDeleting={state.loading}
           onConfirm={async () => {
-            await API.delete(`/books/${deleteConfirmId}`);
-            setDeleteConfirmId(null);
-            fetchBooks(page);
+            await API.delete(`/books/${state.deleteConfirmId}`);
+            dispatch({ type: "SET_DELETE_CONFIRM", payload: null });
+            fetchBooks(state.page);
           }}
-          onCancel={() => setDeleteConfirmId(null)}
+          onCancel={() => dispatch({ type: "SET_DELETE_CONFIRM", payload: null })}
         />
       </div>
     </div>
