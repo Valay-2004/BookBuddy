@@ -1,2 +1,20 @@
 BookBuddy_Enhancement_Prompt.md
-*.env*
+
+# Environment files
+*.env
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
