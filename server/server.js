@@ -16,8 +16,26 @@ const readingListRoutes = require("./src/routes/readingList.routes");
 const app = express(); // Express
 
 app.use(helmet()); // Security
-app.use(morgan("dev")); // Logging
+
+// Production logging vs development logging
+if (process.env.NODE_ENV === "production") {
+  app.use(morgan("combined")); // More detailed logging for production
+} else {
+  app.use(morgan("dev")); // Concise logging for development
+}
+
 app.use(compression()); // Compress all responses
+
+// Rate Limiting - Prevent abuse
+const rateLimit = require("express-rate-limit");
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+app.use("/api/", limiter); // Apply to all API routes
 
 // CORS Configuration - Allow frontend URLs in production
 const allowedOrigins = [
