@@ -1,85 +1,67 @@
 const { getAllBooks, createBook, deleteBookById, searchBooks: searchModel, getTopRatedBook, getBookById: getBookModelById } = require("../models/book.model");
-// console.log(require("../models/book.model"));
-async function listBooks(req, res) {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 5;
-    const { rows, total } = await getAllBooks(page, limit);
-    const totalPages = Math.ceil(total / limit);
-    res.json({ success: true, page, limit, total, totalPages, books: rows });
-  } catch (err) {
-    console.error("❌ ERROR in listBooks:", err.message);
-    console.error("Full error:", err);
-    res.status(500).json({ error: err.message });
-  }
-}
+const asyncHandler = require("../utils/asyncHandler");
 
-async function addBook(req, res) {
-  try {
-    const { title, author, summary, description, isbn, cover_url, published_year } = req.body;
-    // Handle both description and summary (legacy)
-    const bookDescription = description || summary;
-    
-    const newBook = await createBook(title, author, bookDescription, isbn, cover_url, published_year);
-    return res.status(201).json(newBook);
-  } catch (err) {
-    console.error("Error adding book:", err);
-    return res.status(500).json({ error: "Failed to add book" });
-  }
-}
+const listBooks = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 5;
+  const { rows, total } = await getAllBooks(page, limit);
+  const totalPages = Math.ceil(total / limit);
+  res.json({ success: true, page, limit, total, totalPages, books: rows });
+});
 
-async function deleteBook(req, res) {
-  try {
-    const { id } = req.params;
-    const deleted = await deleteBookById(id);
-    if (deleted) {
-      res.json({ success: true, message: "Book deleted successfully" });
-    } else {
-      res.status(404).json({ success: false, error: "Book not found" });
-    }
-  } catch (err) {
-    console.error("Error deleting book:", err);
-    res.status(500).json({ success: false, error: "Failed to delete book" });
+const addBook = asyncHandler(async (req, res) => {
+  const { title, author, summary, description, isbn, cover_url, published_year } = req.body;
+  // Handle both description and summary (legacy)
+  const bookDescription = description || summary;
+  
+  if (!title || !author) {
+    const error = new Error("Title and Author are required.");
+    error.status = 400;
+    throw error;
   }
-}
 
-async function searchBooks(req, res) {
-  try {
-    const { q } = req.query;
-    if (!q) {
-      return res.status(400).json({ success: false, error: "Query parameter 'q' is required" });
-    }
-    const books = await searchModel(q);
-    res.json({ success: true, books });
-  } catch (err) {
-    console.error("Error searching books:", err);
-    res.status(500).json({ success: false, error: "Failed to search books" });
-  }
-}
+  const newBook = await createBook(title, author, bookDescription, isbn, cover_url, published_year);
+  return res.status(201).json(newBook);
+});
 
-async function getTopRated(req, res) {
-  try {
-    const book = await getTopRatedBook();
-    res.json({ success: true, book: book || null });
-  } catch (err) {
-    console.error("Error fetching top rated book:", err);
-    res.status(500).json({ success: false, error: "Failed to fetch top rated book" });
+const deleteBook = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const deleted = await deleteBookById(id);
+  if (deleted) {
+    res.json({ success: true, message: "Book deleted successfully" });
+  } else {
+    const error = new Error("Book not found.");
+    error.status = 404;
+    throw error;
   }
-}
+});
 
-async function getBookById(req, res) {
-  try {
-    const { id } = req.params;
-    const book = await getBookModelById(id);
-    if (book) {
-      res.json({ success: true, book });
-    } else {
-      res.status(404).json({ success: false, error: "Book not found" });
-    }
-  } catch (err) {
-    console.error("Error fetching book by ID:", err);
-    res.status(500).json({ success: false, error: "Failed to fetch book" });
+const searchBooks = asyncHandler(async (req, res) => {
+  const { q } = req.query;
+  if (!q) {
+    const error = new Error("Query parameter 'q' is required.");
+    error.status = 400;
+    throw error;
   }
-}
+  const books = await searchModel(q);
+  res.json({ success: true, books });
+});
+
+const getTopRated = asyncHandler(async (req, res) => {
+  const book = await getTopRatedBook();
+  res.json({ success: true, book: book || null });
+});
+
+const getBookById = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const book = await getBookModelById(id);
+  if (book) {
+    res.json({ success: true, book });
+  } else {
+    const error = new Error("Book not found.");
+    error.status = 404;
+    throw error;
+  }
+});
 
 module.exports = { listBooks, addBook, deleteBook, searchBooks, getTopRated, getBookById };

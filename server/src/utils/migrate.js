@@ -24,8 +24,22 @@ async function runMigrations() {
       ALTER TABLE books ADD COLUMN IF NOT EXISTS isbn VARCHAR(20);
       ALTER TABLE books ADD COLUMN IF NOT EXISTS cover_url TEXT;
       ALTER TABLE books ADD COLUMN IF NOT EXISTS published_year INTEGER;
+      ALTER TABLE books ADD COLUMN IF NOT EXISTS read_url TEXT;
+      ALTER TABLE books ADD COLUMN IF NOT EXISTS buy_url TEXT;
+      
+      -- Cleanup duplicates before adding unique constraint
+      DELETE FROM books a USING books b 
+      WHERE a.id < b.id AND a.title = b.title AND a.author = b.author;
+
+      -- Add unique constraint for seeding stability
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unique_title_author') THEN
+          ALTER TABLE books ADD CONSTRAINT unique_title_author UNIQUE (title, author);
+        END IF;
+      END $$;
     `);
-    console.log("✅ Checked/Added optional columns (isbn, cover_url, published_year).");
+    console.log("✅ Checked/Added optional columns and unique constraint.");
 
     // Ensure all tables exist (Self-healing schema)
     console.log("Ensuring all tables exist...");
@@ -55,7 +69,9 @@ async function runMigrations() {
         description TEXT NOT NULL,
         isbn VARCHAR(20),
         cover_url TEXT,
-        published_year INTEGER
+        published_year INTEGER,
+        read_url TEXT,
+        buy_url TEXT
       );
 
       -- Reviews
@@ -109,3 +125,7 @@ async function runMigrations() {
 }
 
 module.exports = runMigrations;
+
+if (require.main === module) {
+  runMigrations().then(() => process.exit(0));
+}

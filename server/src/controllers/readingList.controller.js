@@ -6,74 +6,66 @@ const {
   removeBookFromList,
   getBooksInList,
 } = require("../models/readingList.model");
+const asyncHandler = require("../utils/asyncHandler");
 
-async function listUserReadingLists(req, res) {
-  try {
-    const userId = req.user.id;
-    const lists = await getUserReadingLists(userId);
-    res.json({ success: true, lists });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}
+const listUserReadingLists = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const lists = await getUserReadingLists(userId);
+  res.json({ success: true, lists });
+});
 
-async function createList(req, res) {
-  try {
-    const userId = req.user.id;
-    const { name, description, isPublic } = req.body;
-    const newList = await createReadingList(
-      userId,
-      name,
-      description,
-      isPublic
-    );
-    res.status(201).json(newList);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to create list" });
+const createList = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+  const { name, description, isPublic } = req.body;
+  if (!name) {
+    const error = new Error("List name is required.");
+    error.status = 400;
+    throw error;
   }
-}
+  const newList = await createReadingList(
+    userId,
+    name,
+    description,
+    isPublic
+  );
+  res.status(201).json(newList);
+});
 
-async function getList(req, res) {
-  try {
-    const { id } = req.params;
-    const list = await getReadingListById(id);
-    if (!list) {
-      return res.status(404).json({ error: "List not found" });
-    }
-    const books = await getBooksInList(id);
-    res.json({ success: true, list, books });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+const getList = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const list = await getReadingListById(id);
+  if (!list) {
+    const error = new Error("List not found.");
+    error.status = 404;
+    throw error;
   }
-}
+  const books = await getBooksInList(id);
+  res.json({ success: true, list, books });
+});
 
-async function addBook(req, res) {
-  try {
-    const { listId, bookId } = req.params;
-    const added = await addBookToList(listId, bookId);
-    if (added) {
-      res.json({ success: true, message: "Book added to list" });
-    } else {
-      res.status(400).json({ error: "Book already in list or not found" });
-    }
-  } catch (err) {
-    res.status(500).json({ error: "Failed to add book" });
+const addBook = asyncHandler(async (req, res) => {
+  const { listId, bookId } = req.params;
+  const added = await addBookToList(listId, bookId);
+  if (added) {
+    res.json({ success: true, message: "Book added to list" });
+  } else {
+    const error = new Error("Book already in list or not found.");
+    error.status = 400;
+    throw error;
   }
-}
+});
 
-async function removeBook(req, res) {
-  try {
-    const { listId, bookId } = req.params;
-    const removed = await removeBookFromList(listId, bookId);
-    if (removed) {
-      res.json({ success: true, message: "Book removed from list" });
-    } else {
-      res.status(404).json({ error: "Book not in list" });
-    }
-  } catch (err) {
-    res.status(500).json({ error: "Failed to remove book" });
+const removeBook = asyncHandler(async (req, res) => {
+  const { listId, bookId } = req.params;
+  const removed = await removeBookFromList(listId, bookId);
+  if (removed) {
+    res.json({ success: true, message: "Book removed from list" });
+  } else {
+    const error = new Error("Book not in list.");
+    error.status = 404;
+    throw error;
   }
-}
+});
 
 module.exports = {
   listUserReadingLists,
