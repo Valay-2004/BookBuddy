@@ -4,10 +4,8 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 // Layouts & Context
 import NavBar from "./components/NavBar";
 
-// --- FIX START ---
 // We must use curly braces { } because Core.jsx has multiple exports
 import { PageLoader, Toaster } from "./components/ui/Core";
-// --- FIX END ---
 
 // Lazy Load Pages
 const Books = lazy(() => import("./pages/Books"));
