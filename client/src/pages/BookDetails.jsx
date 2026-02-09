@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
-import { ArrowLeft, BookOpen, User, Calendar, Loader } from "lucide-react";
+import { ArrowLeft, BookOpen, User, Calendar, Loader, ShoppingCart, ExternalLink } from "lucide-react";
 import { motion } from "motion/react";
 import toast from "react-hot-toast";
 
 import API from "../services/api";
 import { fetchBookDetails } from "../services/openLibrary";
-import { Skeleton, Button } from "../components/ui/Core";
+import { Skeleton, Button, cn } from "../components/ui/Core";
 import { useAuth } from "../context/AuthContext";
 
 export default function BookDetails() {
@@ -189,31 +189,48 @@ export default function BookDetails() {
                         </div>
 
                         {/* Action Buttons - Prominent Top Right */}
-                        {(book.read_url || book.buy_url) && (
-                            <div className="flex flex-col gap-3 lg:min-w-[200px]">
-                                {book.read_url && (
-                                    <Button 
-                                        onClick={() => window.open(book.read_url, "_blank")}
-                                        className="bg-accent hover:bg-accent/90 text-white font-bold flex items-center justify-center gap-2 py-6 text-lg shadow-lg"
-                                    >
-                                        <BookOpen size={20} />
-                                        Read Online
-                                        <ExternalLink size={16} className="opacity-70" />
-                                    </Button>
+                        <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:min-w-[200px]">
+                            {/* Read Online Button */}
+                            <Button 
+                                disabled={!book.read_url && !book.gutenberg_id}
+                                onClick={() => {
+                                    if (book.read_url) {
+                                        window.open(book.read_url, "_blank");
+                                    } else if (book.gutenberg_id) {
+                                        // Use the most robust link: the main ebook page which has all formats
+                                        // or keep the cache link if the user prefers, but fallback is safer.
+                                        const cacheUrl = `https://www.gutenberg.org/cache/epub/${book.gutenberg_id}/pg${book.gutenberg_id}-images.html`;
+                                        window.open(cacheUrl, "_blank");
+                                    }
+                                }}
+                                className={cn(
+                                    "font-bold flex items-center justify-center gap-2 py-6 text-lg shadow-lg transition-all",
+                                    (!book.read_url && !book.gutenberg_id) 
+                                        ? "bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed shadow-none" 
+                                        : "bg-accent hover:bg-accent/90 text-white"
                                 )}
-                                {book.buy_url && (
-                                    <Button 
-                                        variant="outline"
-                                        onClick={() => window.open(book.buy_url, "_blank")}
-                                        className="border-2 border-accent text-accent hover:bg-accent/5 font-bold flex items-center justify-center gap-2 py-6 text-lg"
-                                    >
-                                        <ShoppingCart size={20} />
-                                        Buy Book
-                                        <ExternalLink size={16} className="opacity-70" />
-                                    </Button>
-                                )}
-                            </div>
-                        )}
+                            >
+                                <BookOpen size={20} />
+                                {(!book.read_url && !book.gutenberg_id) ? "Read Unavailable" : "Read Online"}
+                            </Button>
+                            
+                            {/* Always show Buy button */}
+                            <Button 
+                                variant="outline"
+                                onClick={() => {
+                                    if (book.buy_url) {
+                                        window.open(book.buy_url, "_blank");
+                                    } else {
+                                        const query = encodeURIComponent(`buy ${book.title} by ${book.author} book`);
+                                        window.open(`https://www.google.com/search?q=${query}`, "_blank");
+                                    }
+                                }}
+                                className="border-2 border-accent text-accent hover:bg-accent/5 font-bold flex items-center justify-center gap-2 py-6 text-lg"
+                            >
+                                <ShoppingCart size={20} />
+                                Buy Book
+                            </Button>
+                        </div>
                     </div>
 
                     <div className="border-t border-zinc-100 dark:border-zinc-800 pt-6">
