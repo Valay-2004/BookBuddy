@@ -5,7 +5,7 @@ async function getAllBooks(page = 1, limit = 5) {
   // Get paginated rows with new fields
   const { rows } = await db.query(
     `SELECT 
-       b.id, b.title, b.author, b.description, b.isbn, b.cover_url, b.published_year,
+       b.id, b.title, b.author, b.description, b.isbn, b.cover_url, b.published_year, b.gutenberg_id,
        COALESCE(ROUND(AVG(r.rating), 1), 0) as avg_rating,
        COUNT(r.id) as review_count
      FROM books b
@@ -23,10 +23,10 @@ async function getAllBooks(page = 1, limit = 5) {
   return { rows, total };
 }
 
-async function createBook(title, author, description, isbn = null, cover_url = null, published_year = null) {
+async function createBook(title, author, description, isbn = null, cover_url = null, published_year = null, gutenberg_id = null) {
   const { rows } = await db.query(
-    "INSERT INTO books (title, author, description, isbn, cover_url, published_year) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-    [title, author, description, isbn, cover_url, published_year]
+    "INSERT INTO books (title, author, description, isbn, cover_url, published_year, gutenberg_id) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *",
+    [title, author, description, isbn, cover_url, published_year, gutenberg_id]
   );
   return rows[0];
 }
@@ -39,7 +39,7 @@ async function deleteBookById(id) {
 async function searchBooks(query) {
   const { rows } = await db.query(
     `SELECT 
-       b.id, b.title, b.author, b.description, b.isbn, b.cover_url, b.published_year,
+       b.id, b.title, b.author, b.description, b.isbn, b.cover_url, b.published_year, b.gutenberg_id,
        COALESCE(ROUND(AVG(r.rating), 1), 0) as avg_rating,
        COUNT(r.id) as review_count
      FROM books b
@@ -71,7 +71,7 @@ async function getTopRatedBook() {
 async function getBookById(id) {
   const { rows } = await db.query(
     `SELECT 
-       b.id, b.title, b.author, b.description, b.isbn, b.cover_url, b.published_year,
+       b.id, b.title, b.author, b.description, b.isbn, b.cover_url, b.published_year, b.gutenberg_id,
        COALESCE(ROUND(AVG(r.rating), 1), 0) as avg_rating,
        COUNT(r.id) as review_count
      FROM books b
