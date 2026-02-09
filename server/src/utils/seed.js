@@ -1,4 +1,5 @@
 const db = require("../config/database");
+const { findGutenbergId } = require("./gutendex_sync");
 
 /**
  * Fetches popular books from Open Library API and seeds the database.
@@ -11,28 +12,44 @@ async function seedBooks() {
     const countRes = await db.query("SELECT COUNT(*) FROM books");
     const count = parseInt(countRes.rows[0].count);
     
-    if (count > 50) {
+    if (count > 100) {
       console.log(`ℹ️ Database already has ${count} books. Updating existing books with better data...`);
       // We'll still run to update descriptions and links
     }
 
-    // 2. Fetch popular books from Open Library
-    console.log("📡 Fetching books from Open Library...");
-    const query = "subject:fiction";
-    const response = await fetch(`https://openlibrary.org/search.json?q=${query}&limit=20`);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const data = await response.json();
+    // 2. Fetch popular books from Open Library across multiple subjects
+    const subjects = ["classic_literature", "science_fiction", "mystery_and_detective_stories", "fantasy", "history"];
+    console.log(`📡 Fetching books from Open Library across: ${subjects.join(", ")}...`);
+    
+    let allDocs = [];
+    for (const subject of subjects) {
+      console.log(`   Fetching ${subject}...`);
+      try {
+        const response = await fetch(`https://openlibrary.org/search.json?subject=${subject}&limit=12`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.docs) allDocs = [...allDocs, ...data.docs];
+        }
+      } catch (e) {
+        console.warn(`   Failed to fetch subject: ${subject}`);
+      }
+      // Delay to be polite
+      await new Promise(r => setTimeout(r, 500));
+    }
 
-    if (!data.docs || data.docs.length === 0) {
+    if (allDocs.length === 0) {
       console.error("❌ No books found to seed.");
       return;
     }
 
-      // 3. Insert books into database
+    // 3. Insert books into database
     let seededCount = 0;
     
-    // Process one by one to avoid rate limiting and allow detail fetching
-    for (const doc of data.docs) {
+    // Process unique books (Open Library search can have overlaps)
+    const uniqueDocs = Array.from(new Map(allDocs.map(item => [item.key, item])).values());
+    console.log(`📚 Processing ${uniqueDocs.length} unique titles...`);
+    
+    for (const doc of uniqueDocs) {
       const title = doc.title;
       const author = doc.author_name ? doc.author_name[0] : "Unknown Author";
       const isbn = doc.isbn ? doc.isbn[0] : null;
@@ -86,18 +103,31 @@ async function seedBooks() {
         buy_url = `https://www.amazon.com/s?k=${encodeURIComponent(title + " " + author)}`;
       }
 
+      // 5. Check Gutendex for Gutenberg ID (Classic Books)
+      let gutenberg_id = null;
+      try {
+        console.log(`   Checking Gutendex for: ${title}`);
+        gutenberg_id = await findGutenbergId(title, author);
+        if (gutenberg_id) {
+          console.log(`   ✨ Found Gutenberg Match: ${gutenberg_id}`);
+        }
+      } catch (e) {
+        console.warn(`   Gutendex check failed for ${title}`);
+      }
+
       try {
         await db.query(
-          `INSERT INTO books (title, author, description, isbn, cover_url, published_year, read_url, buy_url) 
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          `INSERT INTO books (title, author, description, isbn, cover_url, published_year, read_url, buy_url, gutenberg_id) 
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
            ON CONFLICT (title, author) DO UPDATE 
            SET description = EXCLUDED.description,
                read_url = EXCLUDED.read_url, 
                buy_url = EXCLUDED.buy_url,
                cover_url = EXCLUDED.cover_url,
                isbn = EXCLUDED.isbn,
-               published_year = EXCLUDED.published_year`,
-          [title, author, description, isbn, cover_url, published_year, read_url, buy_url]
+               published_year = EXCLUDED.published_year,
+               gutenberg_id = COALESCE(books.gutenberg_id, EXCLUDED.gutenberg_id)`,
+          [title, author, description, isbn, cover_url, published_year, read_url, buy_url, gutenberg_id]
         );
         seededCount++;
       } catch (err) {
@@ -113,4 +143,5 @@ async function seedBooks() {
   }
 }
 
+console.log("\n💡 Pro-tip: You can run this script any time with 'npm run seed' to refresh your collection with high-quality data!");
 seedBooks();
