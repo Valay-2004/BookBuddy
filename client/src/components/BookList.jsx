@@ -133,20 +133,20 @@ export default function BookList({
                   <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400 mt-1 uppercase tracking-wide">
                     by {book.author}
                   </p>
-                  {(book.read_url || book.buy_url) && (
-                    <div className="flex flex-wrap gap-2 mt-2">
-                       {book.read_url && (
-                         <div title="Available to Read Online" className="text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold flex items-center gap-1">
-                            <BookOpen size={10} /> Read
-                         </div>
-                       )}
-                       {book.buy_url && (
-                         <div title="Buy Online" className="text-blue-500 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold flex items-center gap-1">
-                            <ShoppingCart size={10} /> Buy
-                         </div>
-                       )}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {(book.read_url || book.gutenberg_id) ? (
+                      <div title="Available to Read Online" className="text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold flex items-center gap-1">
+                        <BookOpen size={10} /> Read
+                      </div>
+                    ) : (
+                      <div title="Reading Unavailable" className="text-zinc-400 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded text-[10px] uppercase font-bold flex items-center gap-1 opacity-60">
+                        <BookOpen size={10} /> Read
+                      </div>
+                    )}
+                    <div title="Available to Buy" className="text-blue-500 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold flex items-center gap-1">
+                      <ShoppingCart size={10} /> Buy
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Admin Actions */}
