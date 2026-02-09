@@ -106,6 +106,19 @@ export default function Books() {
     setSearchParams(params, { replace: true });
   }, [state.page, state.searchTerm, setSearchParams]);
 
+  // Handle back/forward navigation or manual URL changes (including logo click)
+  useEffect(() => {
+    const urlPage = parseInt(searchParams.get("page") || "1", 10);
+    const urlSearch = searchParams.get("search") || "";
+
+    if (urlPage !== state.page) {
+      dispatch({ type: "SET_PAGE", payload: urlPage });
+    }
+    if (urlSearch !== state.searchTerm) {
+      dispatch({ type: "SET_SEARCH_TERM", payload: urlSearch });
+    }
+  }, [searchParams]); // Only run when URL params change
+
   const attachCoverUrls = (books) => {
     // ... (same as before)
     return books.map((book) => {
