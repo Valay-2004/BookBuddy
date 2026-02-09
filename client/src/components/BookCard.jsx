@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { Star, Trash2 } from "lucide-react";
+import { Star, Trash2, BookOpen, ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/Core";
 
@@ -54,6 +54,18 @@ export default function BookCard({
                 </Button>
               </motion.div>
             )}
+
+            {/* Read/Buy Availability Indicators */}
+            <div className="flex gap-2">
+                {(book.read_url || book.gutenberg_id) && (
+                    <div className="p-1.5 bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 rounded-lg shadow-sm" title="Readable">
+                        <BookOpen size={16} />
+                    </div>
+                )}
+                <div className="p-1.5 bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400 rounded-lg shadow-sm" title="Buyable">
+                    <ShoppingCart size={16} />
+                </div>
+            </div>
           </div>
 
           <motion.p
