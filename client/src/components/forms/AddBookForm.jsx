@@ -14,6 +14,7 @@ export default function AddBookForm({ onAdd, onCancel, isSubmitting }) {
     isbn: "",
     cover_url: "",
     published_year: "",
+    gutenberg_id: "",
   });
 
   const editor = useEditor({
@@ -148,6 +149,18 @@ export default function AddBookForm({ onAdd, onCancel, isSubmitting }) {
                   setNewBook({ ...newBook, isbn: e.target.value })
                 }
                 placeholder="e.g. 978-0743273565"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="gutenberg_id">Gutenberg ID</Label>
+              <Input
+                id="gutenberg_id"
+                value={newBook.gutenberg_id}
+                onChange={(e) =>
+                  setNewBook({ ...newBook, gutenberg_id: e.target.value })
+                }
+                placeholder="e.g. 1250"
               />
             </div>
 
