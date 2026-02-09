@@ -1,3 +1,4 @@
+require("dotenv").config();
 const db = require("../config/database");
 const { findGutenbergId } = require("./gutendex_sync");
 
@@ -143,5 +144,8 @@ async function seedBooks() {
   }
 }
 
-console.log("\n💡 Pro-tip: You can run this script any time with 'npm run seed' to refresh your collection with high-quality data!");
-seedBooks();
+// Check if we are in production and should run automatically
+if (require.main === module) {
+  console.log("\n🚀 Seeding process initiated...");
+  seedBooks();
+}
