@@ -10,7 +10,7 @@ const listBooks = asyncHandler(async (req, res) => {
 });
 
 const addBook = asyncHandler(async (req, res) => {
-  const { title, author, summary, description, isbn, cover_url, published_year } = req.body;
+  const { title, author, summary, description, isbn, cover_url, published_year, gutenberg_id } = req.body;
   // Handle both description and summary (legacy)
   const bookDescription = description || summary;
   
@@ -20,7 +20,7 @@ const addBook = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const newBook = await createBook(title, author, bookDescription, isbn, cover_url, published_year);
+  const newBook = await createBook(title, author, bookDescription, isbn, cover_url, published_year, gutenberg_id);
   return res.status(201).json(newBook);
 });
 
