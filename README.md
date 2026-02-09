@@ -6,36 +6,39 @@ Built with a modern technology stack, it features a responsive and aesthetic use
 
 ## 🚀 Key Features
 
-*   **Authentication & User Management**: Secure Sign Up and Login functionality with role-based access (User/Admin).
-*   **Book Management**: Browse a collection of books with detailed descriptions, authors, and cover images.
-*   **Reading Lists**: Create, manage, and curate personal reading lists (public or private).
-*   **Reviews & Ratings**: Rate books and write detailed reviews using a rich text editor.
-*   **Responsive Design**: A beautiful, mobile-first interface built with Tailwind CSS and Radix UI.
-*   **Admin Dashboard**: Administrative tools to manage the book database.
+- **Authentication & User Management**: Secure Sign Up and Login functionality with role-based access (User/Admin).
+- **Book Management**: Browse a collection of books with detailed descriptions, authors, and cover images.
+- **Reading Lists**: Create, manage, and curate personal reading lists (public or private).
+- **Reviews & Ratings**: Rate books and write detailed reviews using a rich text editor.
+- **Responsive Design**: A beautiful, mobile-first interface built with Tailwind CSS and Radix UI.
+- **Admin Dashboard**: Administrative tools to manage the book database.
 
 ## 🛠️ Technology Stack
 
 ### Frontend (`/client`)
-*   **Framework**: [React](https://react.dev/) with [Vite](https://vitejs.dev/)
-*   **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-*   **UI Components**: [Radix UI](https://www.radix-ui.com/), `lucide-react` (Icons)
-*   **State Management & Data Fetching**: `axios`, `react-hook-form`, `zod`
-*   **Rich Text Editor**: [Tiptap](https://tiptap.dev/)
-*   **Routing**: `react-router-dom`
+
+- **Framework**: [React](https://react.dev/) with [Vite](https://vitejs.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components**: [Radix UI](https://www.radix-ui.com/), `lucide-react` (Icons)
+- **State Management & Data Fetching**: `axios`, `react-hook-form`, `zod`
+- **Rich Text Editor**: [Tiptap](https://tiptap.dev/)
+- **Routing**: `react-router-dom`
 
 ### Backend (`/server`)
-*   **Runtime**: [Node.js](https://nodejs.org/)
-*   **Framework**: [Express.js](https://expressjs.com/)
-*   **Database**: [PostgreSQL](https://www.postgresql.org/)
-*   **Authentication**: JSON Web Tokens (JWT) & bcrypt
-*   **Security**: Helmet, CORS, Rate Limiting
+
+- **Runtime**: [Node.js](https://nodejs.org/)
+- **Framework**: [Express.js](https://expressjs.com/)
+- **Database**: [PostgreSQL](https://www.postgresql.org/)
+- **Authentication**: JSON Web Tokens (JWT) & bcrypt
+- **Security**: Helmet, CORS, Rate Limiting
 
 ## ⚙️ Prerequisites
 
 Before you begin, ensure you have the following installed:
-*   [Node.js](https://nodejs.org/) (v18 or higher)
-*   [PostgreSQL](https://www.postgresql.org/) (v13 or higher)
-*   [Git](https://git-scm.com/)
+
+- [Node.js](https://nodejs.org/) (v18 or higher)
+- [PostgreSQL](https://www.postgresql.org/) (v13 or higher)
+- [Git](https://git-scm.com/)
 
 ## 📦 Local Development Setup
 
@@ -92,6 +95,17 @@ To populate your database with sample books from Open Library:
 npm run seed
 ```
 
+**Update Book Metadata** (Fix summaries & covers)
+
+If you have existing books with short descriptions or missing covers, you can enhance them using the Google Books API:
+
+```bash
+npm run update-metadata
+```
+
+> [!TIP]
+> You can limit the number of books processed for testing: `node src/utils/update_metadata.js --limit=10`
+
 ### 3. Frontend Setup
 
 Open a new terminal, navigate to the client directory:
@@ -128,6 +142,7 @@ The application will be available at `http://localhost:5173`
 ### Backend Deployment (Render/Railway/Heroku)
 
 1. **Set Environment Variables** in your hosting platform:
+
    ```env
    NODE_ENV=production
    DATABASE_URL=your_production_database_url
@@ -144,6 +159,7 @@ The application will be available at `http://localhost:5173`
 ### Frontend Deployment (Vercel/Netlify)
 
 1. **Set Environment Variables**:
+
    ```env
    VITE_API_URL=https://your-backend-domain.com/api
    ```
@@ -179,20 +195,24 @@ BookBuddy/
 ## 🔧 API Endpoints
 
 ### Authentication
+
 - `POST /api/auth/register` - Register new user
 - `POST /api/auth/login` - User login
 
 ### Books
+
 - `GET /api/books` - List all books
 - `POST /api/books` - Create book (Admin only)
 - `GET /api/books/:id` - Get book details
 - `DELETE /api/books/:id` - Delete book (Admin only)
 
 ### Reviews
+
 - `POST /api/books/:id/reviews` - Create review
 - `GET /api/books/:id/reviews` - Get book reviews
 
 ### Reading Lists
+
 - `GET /api/reading-lists` - Get user's reading lists
 - `POST /api/reading-lists` - Create new list
 - `POST /api/reading-lists/:listId/books/:bookId` - Add book to list
