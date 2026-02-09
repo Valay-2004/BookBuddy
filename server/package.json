@@ -6,6 +6,7 @@
     "dev": "nodemon server.js",
     "start": "node server.js",
     "seed": "node src/utils/seed.js",
+    "update-metadata": "node src/utils/update_metadata.js",
     "deploy-seed": "npm run seed && npm start"
   },
   "dependencies": {
