@@ -26,6 +26,15 @@ app.use(express.json());
 // Trust proxy on Render (required for express-rate-limit behind a reverse proxy)
 app.set("trust proxy", 1);
 
+// Middleware to support Private Network Access (PNA)
+// This allows the public Vercel frontend to talk to a local backend
+app.use((req, res, next) => {
+  if (req.headers["access-control-request-private-network"]) {
+    res.setHeader("Access-Control-Allow-Private-Network", "true");
+  }
+  next();
+});
+
 // Logging: detailed in production, concise in dev
 app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 

@@ -1,7 +1,32 @@
 // Use this script to populate the database with new books automatically
 // or you can always add books using admin account manually
 require("dotenv").config();
+const axios = require("axios");
+const https = require("https");
 const db = require("../config/database");
+
+// Force IPv4 to avoid ETIMEDOUT in environments with broken IPv6 routes
+const agent = new https.Agent({ family: 4 });
+
+/**
+ * Robust fetch helper with retries and custom timeout.
+ * Replaces native fetch which was hitting ETIMEDOUT in some environments.
+ */
+async function fetchJson(url, retries = 2) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const { data } = await axios.get(url, {
+        timeout: 15000,
+        httpsAgent: agent,
+      });
+      return data;
+    } catch (err) {
+      if (i === retries) throw err;
+      console.warn(`   ⚠️  Retry ${i + 1} for ${url.split("?")[0]}...`);
+      await delay(1000 * (i + 1));
+    }
+  }
+}
 
 /**
  * Fetches books from Open Library and seeds the database.
@@ -33,13 +58,10 @@ async function seedBooks() {
     for (const subject of subjects) {
       console.log(`📡 Fetching subject: ${subject}...`);
       try {
-        const res = await fetch(
+        const data = await fetchJson(
           `https://openlibrary.org/search.json?subject=${subject}&limit=12`,
         );
-        if (res.ok) {
-          const data = await res.json();
-          if (data.docs) allDocs.push(...data.docs);
-        }
+        if (data.docs) allDocs.push(...data.docs);
       } catch (e) {
         console.warn(
           `   ⚠️  Failed to fetch subject: ${subject} - ${e.message}`,
@@ -58,11 +80,8 @@ async function seedBooks() {
       const type = url.includes("daily") ? "Daily" : "Weekly";
       console.log(`📡 Fetching Trending: ${type}...`);
       try {
-        const res = await fetch(`${url}?limit=15`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.works) allDocs.push(...data.works);
-        }
+        const data = await fetchJson(`${url}?limit=15`);
+        if (data.works) allDocs.push(...data.works);
       } catch (e) {
         console.warn(`   ⚠️  Failed to fetch Trending: ${type} - ${e.message}`);
       }
@@ -88,8 +107,10 @@ async function seedBooks() {
         doc.first_publish_year || doc.publish_year?.[0] || null;
 
       // Cover URL: MUST exist to maintain premium look
-      const cover_url = doc.cover_i
-        ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`
+      const cover_i =
+        doc.cover_i || (Array.isArray(doc.covers) ? doc.covers[0] : null);
+      const cover_url = cover_i
+        ? `https://covers.openlibrary.org/b/id/${cover_i}-L.jpg`
         : null;
 
       if (!cover_url) {
@@ -101,14 +122,13 @@ async function seedBooks() {
       let description = doc.first_sentence?.[0] || "";
       try {
         if (doc.key) {
-          const workRes = await fetch(`https://openlibrary.org${doc.key}.json`);
-          if (workRes.ok) {
-            const work = await workRes.json();
-            if (typeof work.description === "string")
-              description = work.description;
-            else if (work.description?.value)
-              description = work.description.value;
-          }
+          const work = await fetchJson(
+            `https://openlibrary.org${doc.key}.json`,
+          );
+          if (typeof work.description === "string")
+            description = work.description;
+          else if (work.description?.value)
+            description = work.description.value;
           await delay(500);
         }
       } catch {
@@ -137,17 +157,14 @@ async function seedBooks() {
       // Gutenberg ID: quick inline lookup
       let gutenberg_id = null;
       try {
-        const gRes = await fetch(
+        const gData = await fetchJson(
           `https://gutendex.com/books?search=${encodeURIComponent(title + " " + author)}`,
         );
-        if (gRes.ok) {
-          const gData = await gRes.json();
-          const match = gData.results?.[0];
-          if (match?.title?.toLowerCase().includes(title.toLowerCase())) {
-            gutenberg_id = match.id.toString();
-            // PRIORITIZE Gutenberg as the primary read_url if found
-            read_url = `https://www.gutenberg.org/cache/epub/${gutenberg_id}/pg${gutenberg_id}-images.html`;
-          }
+        const match = gData.results?.[0];
+        if (match?.title?.toLowerCase().includes(title.toLowerCase())) {
+          gutenberg_id = match.id.toString();
+          // PRIORITIZE Gutenberg as the primary read_url if found
+          read_url = `https://www.gutenberg.org/cache/epub/${gutenberg_id}/pg${gutenberg_id}-images.html`;
         }
         await delay(300);
       } catch {
