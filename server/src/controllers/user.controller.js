@@ -1,17 +1,15 @@
 const { getUserProfile } = require("../models/user.model");
+const asyncHandler = require("../utils/asyncHandler");
 
-async function getProfile(req, res) {
-  try {
-    const userId = req.user.id; // JWT gives us this
-    const user = await getUserProfile(userId);
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-    res.json(user);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+// GET /api/users/me — get current user's profile with reviews
+const getProfile = asyncHandler(async (req, res) => {
+  const user = await getUserProfile(req.user.id);
+  if (!user) {
+    const error = new Error("User not found");
+    error.status = 404;
+    throw error;
   }
-}
+  res.json(user);
+});
 
 module.exports = { getProfile };

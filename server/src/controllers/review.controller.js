@@ -3,47 +3,30 @@ const {
   getReviewsForBook,
   getBookRatings,
 } = require("../models/review.model");
+const asyncHandler = require("../utils/asyncHandler");
 
-// postReview function
-async function postReview(req, res) {
-  try {
-    // Support bookId in params (preferred) or body (legacy)
-    const { rating, reviewText } = req.body; // get from body
-    const bookId = req.params.id || req.body.bookId;
-    const userId = req.user.id; // comes from JWT middleware
-
-    // check if bookId and rating is not available
-    if (!bookId || rating == null) {
-      return res.status(400).json({ error: "bookId and rating are required" });
-    }
-
-    const review = await addReview({ userId, bookId, rating, reviewText });
-    res.status(201).json(review);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+// POST /api/books/:id/reviews — add or update a review
+const postReview = asyncHandler(async (req, res) => {
+  const { rating, reviewText } = req.body;
+  const bookId = req.params.id;
+  const userId = req.user.id; // from JWT middleware
+  if (!bookId || rating == null) {
+    const error = new Error("bookId and rating are required");
+    error.status = 400;
+    throw error;
   }
-}
+  const review = await addReview({ userId, bookId, rating, reviewText });
+  res.status(201).json(review);
+});
 
-// get book reviews function
-async function getBookReviews(req, res) {
-  try {
-    const { id } = req.params;
-    const reviews = await getReviewsForBook(id);
-    res.json(reviews);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}
+// GET /api/books/:id/reviews — list reviews for a book
+const getBookReviews = asyncHandler(async (req, res) => {
+  res.json(await getReviewsForBook(req.params.id));
+});
 
-// listing books with review
-async function listBooksWithRatings(req, res) {
-  try {
-    const books = await getBookRatings();
-    res.json(books);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-}
+// GET /api/books/ratings — all books ranked by rating
+const listBooksWithRatings = asyncHandler(async (req, res) => {
+  res.json(await getBookRatings());
+});
 
-// exporting modules
 module.exports = { postReview, getBookReviews, listBooksWithRatings };
