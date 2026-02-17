@@ -79,6 +79,8 @@ const normalizeOpenLibraryBook = (work) => {
   let gutenberg_id_val = null;
   if (work.identifiers?.gutenberg) {
     gutenberg_id_val = work.identifiers.gutenberg[0];
+    // PRIORITIZE Gutenberg for direct reading if ID exists
+    read_url_val = `https://www.gutenberg.org/cache/epub/${gutenberg_id_val}/pg${gutenberg_id_val}-images.html`;
   }
 
   return {
