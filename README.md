@@ -60,7 +60,10 @@ npm install
 
 **Configure Environment Variables**
 
-Copy the example environment file and update it with your local settings:
+Copy the example environment file and update it with your settings.
+
+> [!IMPORTANT]
+> If using **Supabase**, use the **Transaction Pooler** URL (port `6543`) for better stability.
 
 ```bash
 cp .env.example .env
@@ -73,7 +76,7 @@ DB_USER=postgres
 DB_PASSWORD=your_password
 DB_HOST=localhost
 DB_PORT=5432
-DB_NAME=bookbuddy_db
+DB_NAME=your_database_name
 PORT=5000
 JWT_SECRET=your_super_secret_jwt_key
 FRONTEND_URL=http://localhost:5173
@@ -81,30 +84,20 @@ FRONTEND_URL=http://localhost:5173
 
 **Run Database Migrations**
 
-The application automatically runs migrations on startup. Simply start the server:
+The application features a **self-healing migration system** that automatically ensures your schema is correct, deduplicates data, and standardizes indexes on startup. Simply start the server:
 
 ```bash
 npm run dev
 ```
 
-**Seed the Database** (Optional)
+**Populate Database (Automated & Manual)**
 
-To populate your database with sample books from Open Library:
-
-```bash
-npm run seed
-```
-
-**Update Book Metadata** (Fix summaries & covers)
-
-If you have existing books with short descriptions or missing covers, you can enhance them using the Google Books API:
-
-```bash
-npm run update-metadata
-```
-
-> [!TIP]
-> You can limit the number of books processed for testing: `node src/utils/update_metadata.js --limit=10`
+1. **Automated Seeding**: `seed.js` is optimized for production cron jobs (e.g., **Render Cron**). It fetches Daily/Weekly **Trending Books** and core subjects.
+   ```bash
+   # Run once manually if needed
+   node src/utils/seed.js
+   ```
+2. **Quality Bar**: Our seeding process automatically filters for high-quality data (requires Large covers and substantial summaries).
 
 ### 3. Frontend Setup
 
@@ -137,38 +130,21 @@ npm run dev
 
 The application will be available at `http://localhost:5173`
 
-## 🚀 Production Deployment
+## 🚀 Key Production Features
 
-### Backend Deployment (Render/Railway/Heroku)
+### 1. Automation with Render Cron
 
-1. **Set Environment Variables** in your hosting platform:
+- **Schedule**: Set up a Cron Job on Render to run `node src/utils/seed.js` every 15 days (`0 0 */15 * *`).
+- **Refresh**: The "Trending Now" sidebar automatically randomizes from a pool of trending titles on every load.
 
-   ```env
-   NODE_ENV=production
-   DATABASE_URL=your_production_database_url
-   JWT_SECRET=your_production_secret
-   FRONTEND_URL=https://your-frontend-domain.com
-   ```
+### 2. Sorting & Discovery
 
-2. **Build Command**: Not required (Node.js apps run directly)
+- **Sorting**: Organize the library by **Latest Added**, **Name (A-Z)**, or **Publication Year**.
+- **Deep Linking**: All search and sort states are persisted in the URL for easy sharing.
 
-3. **Start Command**: `npm start`
+### 3. Optimized Reading Experience
 
-4. **Database**: Ensure your PostgreSQL database is provisioned. The app will automatically run migrations on startup.
-
-### Frontend Deployment (Vercel/Netlify)
-
-1. **Set Environment Variables**:
-
-   ```env
-   VITE_API_URL=https://your-backend-domain.com/api
-   ```
-
-2. **Build Command**: `npm run build`
-
-3. **Output Directory**: `dist`
-
-4. **Install Command**: `npm install`
+- **Direct Access**: "Read" buttons point directly to the Project Gutenberg HTML cache or the Archive.org viewer.
 
 ## 📂 Project Structure
 
@@ -201,8 +177,10 @@ BookBuddy/
 
 ### Books
 
-- `GET /api/books` - List all books
+- `GET /api/books?page=1&sortBy=newest` - List books with sorting
 - `POST /api/books` - Create book (Admin only)
+- `GET /api/books/search?q=` - Search titles/authors
+- `GET /api/books/top-rated` - Get editor's pick
 - `GET /api/books/:id` - Get book details
 - `DELETE /api/books/:id` - Delete book (Admin only)
 
