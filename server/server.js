@@ -3,81 +3,77 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const compression = require("compression");
+const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 
-// Routes
+// Route imports
 const authRoutes = require("./src/routes/auth.routes");
 const bookRoutes = require("./src/routes/book.routes");
 const reviewRoutes = require("./src/routes/review.routes");
 const userRoutes = require("./src/routes/user.routes");
 const adminRoutes = require("./src/routes/admin.routes");
 const readingListRoutes = require("./src/routes/readingList.routes");
-
-const app = express(); // Express
-
-app.use(helmet()); // Security
-
-// Production logging vs development logging
-if (process.env.NODE_ENV === "production") {
-  app.use(morgan("combined")); // More detailed logging for production
-} else {
-  app.use(morgan("dev")); // Concise logging for development
-}
-
-app.use(compression()); // Compress all responses
-
-// Rate Limiting - Prevent abuse
-const rateLimit = require("express-rate-limit");
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: "Too many requests from this IP, please try again later.",
-  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-});
-app.use("/api/", limiter); // Apply to all API routes
-
-// CORS Configuration - Allow frontend URLs in production
-const allowedOrigins = [
-  "http://localhost:5173", 
-  "http://localhost:5174",
-  "https://book-buddy-gold.vercel.app",
-  process.env.FRONTEND_URL
-].filter(Boolean);
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
-app.use(cors(corsOptions)); // cors with configuration
-app.use(express.json());
-
-app.use("/api/books", bookRoutes); // for bookRoutes
-app.use("/api/auth", authRoutes); // for authRoutes
-app.use("/api", reviewRoutes); // for reviews routes
-app.use("/api/users", userRoutes); // for user profile routes
-app.use("/api", adminRoutes); // for admin actions routes
-app.use("/api/reading-lists", readingListRoutes); // for reading list routes
-
-// Adding the centralized errorHandler
 const errorHandler = require("./src/middleware/errorHandler");
-app.use(errorHandler);
-
-// Database Migration (Self-Healing)
 const runMigrations = require("./src/utils/migrate");
 
-// Port for server
-const PORT = process.env.PORT || 5000;
+const app = express();
 
-// Run migrations then start server
+// --- Core Middleware ---
+app.use(helmet());
+app.use(compression());
+app.use(express.json());
+
+// Trust proxy on Render (required for express-rate-limit behind a reverse proxy)
+app.set("trust proxy", 1);
+
+// Logging: detailed in production, concise in dev
+app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+
+// CORS — allow frontend origins
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "https://book-buddy-gold.vercel.app",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      if (!origin || allowedOrigins.includes(origin)) cb(null, true);
+      else cb(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
+
+// Rate limiting
+app.use(
+  "/api/",
+  rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 200, // Increased for testing & search/sort heavy usage
+    message: "Too many requests, please try again later.",
+    standardHeaders: true,
+    legacyHeaders: false,
+  }),
+);
+
+// --- Routes ---
+app.use("/api/books", bookRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api", reviewRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api", adminRoutes);
+app.use("/api/reading-lists", readingListRoutes);
+
+// Centralized error handler (must be after routes)
+app.use(errorHandler);
+
+// --- Start ---
+const PORT = process.env.PORT || 5000;
 runMigrations().then(() => {
-  app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });
