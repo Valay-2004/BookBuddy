@@ -3,12 +3,14 @@ import { motion } from "motion/react";
 import { Plus, Search } from "lucide-react";
 import { Button } from "./ui/Core";
 
-export default function BooksHero({ 
-  user, 
-  searchTerm, 
-  isSearching, 
-  onSearchChange, 
-  onToggleAddForm 
+export default function BooksHero({
+  user,
+  searchTerm,
+  isSearching,
+  onSearchChange,
+  sortBy,
+  onSortChange,
+  onToggleAddForm,
 }) {
   return (
     <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-zinc-200 dark:border-zinc-800 pb-8 mb-8">
@@ -21,15 +23,14 @@ export default function BooksHero({
           The <span className="text-accent italic">Review</span>.
         </motion.h1>
         <p className="text-xl text-zinc-500 font-light max-w-lg">
-          Curated reading lists and honest critiques for the modern
-          bibliophile.
+          Curated reading lists and honest critiques for the modern bibliophile.
         </p>
       </div>
 
       {/* Controls */}
       <div className="flex items-center gap-3">
         {/* Search */}
-        <motion.div 
+        <motion.div
           className="relative hidden sm:block"
           whileFocus={{ scale: 1.02 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
@@ -43,9 +44,21 @@ export default function BooksHero({
             placeholder="Search titles..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10 pr-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/10 transition-all duration-300 w-64 focus:w-80"
+            className="pl-10 pr-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-sm outline-none focus:border-accent focus:ring-2 focus:ring-accent/10 transition-all duration-300 w-48 sm:w-64 focus:w-64 sm:focus:w-80"
           />
         </motion.div>
+
+        {/* Sort Dropdown */}
+        <select
+          value={sortBy}
+          onChange={(e) => onSortChange(e.target.value)}
+          className="px-4 py-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-full text-xs font-medium outline-none focus:border-accent transition-all cursor-pointer text-zinc-600 dark:text-zinc-400 appearance-none h-9 inline-flex items-center justify-center hover:border-zinc-300 dark:hover:border-zinc-700"
+        >
+          <option value="newest">Latest Added</option>
+          <option value="title">Name (A-Z)</option>
+          <option value="year_new">Year (Newest)</option>
+          <option value="year_old">Year (Oldest)</option>
+        </select>
 
         {user?.role === "admin" && (
           <Button onClick={onToggleAddForm}>

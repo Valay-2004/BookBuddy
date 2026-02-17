@@ -1,8 +1,11 @@
 import axios from "axios";
 
 // Our backend base URL - Support environment variable for production
-const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+// Production / Deployable version (commented out for now)
+// const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+// Local development version
+const API_BASE_URL = "http://localhost:5000/api";
 
 const API = axios.create({
   baseURL: API_BASE_URL,

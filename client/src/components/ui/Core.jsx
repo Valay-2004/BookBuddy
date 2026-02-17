@@ -45,26 +45,6 @@ export function CardContent({ children, className }) {
 }
 
 // --- Rest of your Core.jsx (Badge, Button, etc.) ---
-// export function Badge({ children, variant = "neutral", className }) {
-//   const styles = {
-//     neutral: "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300",
-//     accent:
-//       "bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800",
-//     outline: "border border-zinc-200 dark:border-zinc-700 text-zinc-500",
-//   };
-
-//   return (
-//     <span
-//       className={cn(
-//         "px-2.5 py-0.5 rounded-md text-[10px] font-bold tracking-wider uppercase",
-//         styles[variant],
-//         className,
-//       )}
-//     >
-//       {children}
-//     </span>
-//   );
-// }
 
 // --- Inputs & Form Elements ---
 
@@ -173,7 +153,10 @@ export function Badge({ children, variant = "neutral" }) {
 export function Skeleton({ className, ...props }) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-zinc-200 dark:bg-zinc-800", className)}
+      className={cn(
+        "animate-pulse rounded-md bg-zinc-200 dark:bg-zinc-800",
+        className,
+      )}
       {...props}
     />
   );

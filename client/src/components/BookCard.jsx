@@ -1,8 +1,8 @@
 import React from "react";
 import { motion } from "motion/react";
 import { Star, Trash2, BookOpen, ShoppingCart } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Button } from "@/components/ui/Core";
+import { Card, CardContent } from "./ui/Core";
+import { Button } from "./ui/Core";
 
 export default function BookCard({
   book,
@@ -24,7 +24,7 @@ export default function BookCard({
       className="cursor-pointer"
     >
       <Card className="group relative overflow-hidden flex flex-col h-full hover:shadow-xl hover:shadow-brand-500/10 dark:hover:shadow-brand-500/20 transition-all duration-500 border-2 border-transparent hover:border-brand-200 dark:hover:border-brand-800 bg-gradient-to-br from-white to-zinc-50 dark:from-zinc-900 dark:to-zinc-800">
-        {/* Decorative gradient line at top */}
+        {/* Decorative gradient line */}
         <div className="h-1 w-full bg-linear-to-r from-brand-400 via-brand-500 to-brand-600 group-hover:from-brand-500 group-hover:via-brand-600 group-hover:to-brand-700 transition-all duration-500" />
 
         <CardContent className="p-6 flex flex-col flex-1">
@@ -38,33 +38,45 @@ export default function BookCard({
               {book.title}
             </motion.h3>
 
-            {user?.role === "admin" && (
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDeleteClick?.(book.id);
-                  }}
-                  className="text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-all duration-300 p-2 rounded-full"
-                  aria-label="Delete Book"
+            <div className="flex gap-2 items-center">
+              {user?.role === "admin" && (
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                 >
-                  <Trash2 size={18} />
-                </Button>
-              </motion.div>
-            )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteClick?.(book.id);
+                    }}
+                    className="text-zinc-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-all duration-300 p-2 rounded-full"
+                    aria-label="Delete Book"
+                  >
+                    <Trash2 size={18} />
+                  </Button>
+                </motion.div>
+              )}
 
-            {/* Read/Buy Availability Indicators */}
-            <div className="flex gap-2">
+              {/* Metadata indicators */}
+              <div className="flex gap-1.5 items-center">
                 {(book.read_url || book.gutenberg_id) && (
-                    <div className="p-1.5 bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 rounded-lg shadow-sm" title="Readable">
-                        <BookOpen size={16} />
-                    </div>
+                  <div
+                    className="p-1.5 bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400 rounded-lg shadow-sm"
+                    title="Readable"
+                  >
+                    <BookOpen size={16} />
+                  </div>
                 )}
-                <div className="p-1.5 bg-orange-50 dark:bg-orange-950 text-orange-600 dark:text-orange-400 rounded-lg shadow-sm" title="Buyable">
-                    <ShoppingCart size={16} />
+
+                <div
+                  className="p-1.5 bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 rounded-lg shadow-sm"
+                  title="Buy Online"
+                >
+                  <ShoppingCart size={16} />
                 </div>
+              </div>
             </div>
           </div>
 

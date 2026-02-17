@@ -1,13 +1,13 @@
 import React, { useEffect, useReducer, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { useNavigate } from "react-router-dom";
-import toast, { Toaster } from "react-hot-toast";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import toast from "react-hot-toast";
 
 import API from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
 // Components
-import BookList from "../components/BookList"; 
+import BookList from "../components/BookList";
 import AddBookForm from "../components/forms/AddBookForm";
 import ReviewModal from "../components/modals/ReviewModal";
 import ViewReviewsModal from "../components/modals/ViewReviewsModal";
@@ -21,7 +21,11 @@ import TrendingSidebar from "../components/TrendingSidebar";
 const booksReducer = (state, action) => {
   switch (action.type) {
     case "SET_BOOKS":
-      return { ...state, books: action.payload.books, totalPages: action.payload.totalPages };
+      return {
+        ...state,
+        books: action.payload.books,
+        totalPages: action.payload.totalPages,
+      };
     case "SET_LOADING":
       return { ...state, loading: action.payload };
     case "SET_SEARCHING":
@@ -32,6 +36,8 @@ const booksReducer = (state, action) => {
       return { ...state, searchTerm: action.payload };
     case "SET_TOP_RATED":
       return { ...state, topRatedBook: action.payload };
+    case "SET_SORT_BY":
+      return { ...state, sortBy: action.payload, page: 1 };
     case "TOGGLE_ADD_FORM":
       return { ...state, showAddForm: !state.showAddForm };
     case "SET_ADD_FORM":
@@ -45,7 +51,10 @@ const booksReducer = (state, action) => {
     case "SET_DELETE_CONFIRM":
       return { ...state, deleteConfirmId: action.payload };
     case "SET_BOOK_REVIEWS":
-      return { ...state, bookReviews: { ...state.bookReviews, ...action.payload } };
+      return {
+        ...state,
+        bookReviews: { ...state.bookReviews, ...action.payload },
+      };
     case "SET_REVIEW_RATING":
       return { ...state, reviewRating: action.payload };
     case "SET_REVIEW_TEXT":
@@ -76,25 +85,24 @@ const initialBooksState = {
   reviewRating: 5,
   reviewText: "",
   isReviewSubmitting: false,
+  sortBy: "newest",
 };
-
-import { useSearchParams } from "react-router-dom";
-
-// ... (imports remain the same)
 
 export default function Books() {
   const { user, token } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   // Initialize state from URL params
   const initialPage = parseInt(searchParams.get("page") || "1", 10);
   const initialSearch = searchParams.get("search") || "";
+  const initialSort = searchParams.get("sortBy") || "newest";
 
   const [state, dispatch] = useReducer(booksReducer, {
     ...initialBooksState,
     page: initialPage,
     searchTerm: initialSearch,
-    // If there's a search term, we should probably be in "searching" mode initially, 
+    sortBy: initialSort,
+    // If there's a search term, we should probably be in "searching" mode initially,
     // but the effect will handle the fetch.
   });
 
@@ -103,19 +111,24 @@ export default function Books() {
     const params = {};
     if (state.page > 1) params.page = state.page;
     if (state.searchTerm) params.search = state.searchTerm;
+    if (state.sortBy !== "newest") params.sortBy = state.sortBy;
     setSearchParams(params, { replace: true });
-  }, [state.page, state.searchTerm, setSearchParams]);
+  }, [state.page, state.searchTerm, state.sortBy, setSearchParams]);
 
   // Handle back/forward navigation or manual URL changes (including logo click)
   useEffect(() => {
     const urlPage = parseInt(searchParams.get("page") || "1", 10);
     const urlSearch = searchParams.get("search") || "";
+    const urlSort = searchParams.get("sortBy") || "newest";
 
     if (urlPage !== state.page) {
       dispatch({ type: "SET_PAGE", payload: urlPage });
     }
     if (urlSearch !== state.searchTerm) {
       dispatch({ type: "SET_SEARCH_TERM", payload: urlSearch });
+    }
+    if (urlSort !== state.sortBy) {
+      dispatch({ type: "SET_SORT_BY", payload: urlSort });
     }
   }, [searchParams]); // Only run when URL params change
 
@@ -132,12 +145,17 @@ export default function Books() {
     });
   };
 
-  const fetchBooks = useCallback(async (pageNum) => {
+  const fetchBooks = useCallback(async (pageNum, sort) => {
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      const { data } = await API.get(`/books?page=${pageNum}&limit=5`);
+      const { data } = await API.get(
+        `/books?page=${pageNum}&limit=5&sortBy=${sort}`,
+      );
       const booksWithCovers = attachCoverUrls(data.books);
-      dispatch({ type: "SET_BOOKS", payload: { books: booksWithCovers, totalPages: data.totalPages } });
+      dispatch({
+        type: "SET_BOOKS",
+        payload: { books: booksWithCovers, totalPages: data.totalPages },
+      });
     } catch (err) {
       toast.error("Failed to load library");
     } finally {
@@ -154,16 +172,19 @@ export default function Books() {
       return () => clearTimeout(delayDebounceFn);
     } else {
       // If no search term, fetch normal list
-      fetchBooks(state.page);
+      fetchBooks(state.page, state.sortBy);
     }
-  }, [state.searchTerm, state.page, fetchBooks]);
+  }, [state.searchTerm, state.page, state.sortBy, fetchBooks]);
 
   const handleSearch = async (query) => {
     dispatch({ type: "SET_SEARCHING", payload: true });
     try {
       const { data } = await API.get(`/books/search?q=${query}`);
       const booksWithCovers = attachCoverUrls(data.books);
-      dispatch({ type: "SET_BOOKS", payload: { books: booksWithCovers, totalPages: 1 } });
+      dispatch({
+        type: "SET_BOOKS",
+        payload: { books: booksWithCovers, totalPages: 1 },
+      });
     } catch (err) {
       toast.error("Search failed");
     } finally {
@@ -200,7 +221,7 @@ export default function Books() {
 
   const navigate = useNavigate();
   const handleBookClick = (bookId) => {
-     navigate(`/book/${bookId}`);
+    navigate(`/book/${bookId}`);
   };
 
   const handleAddBook = async (bookData) => {
@@ -233,7 +254,10 @@ export default function Books() {
       toast.success("Review posted");
       // Refresh reviews for this book
       const { data } = await API.get(`/books/${state.reviewOpenFor}/reviews`);
-      dispatch({ type: "SET_BOOK_REVIEWS", payload: { [state.reviewOpenFor]: data } });
+      dispatch({
+        type: "SET_BOOK_REVIEWS",
+        payload: { [state.reviewOpenFor]: data },
+      });
       dispatch({ type: "RESET_REVIEW_FORM" });
     } catch (err) {
       toast.error(err.response?.data?.error || "Failed to post review");
@@ -245,13 +269,17 @@ export default function Books() {
   return (
     <div className="min-h-screen bg-paper dark:bg-dark-paper">
       <div className="editorial-container py-12">
-        <Toaster position="bottom-right" />
-
-        <BooksHero 
+        <BooksHero
           user={user}
           searchTerm={state.searchTerm}
           isSearching={state.isSearching}
-          onSearchChange={(val) => dispatch({ type: "SET_SEARCH_TERM", payload: val })}
+          onSearchChange={(val) =>
+            dispatch({ type: "SET_SEARCH_TERM", payload: val })
+          }
+          sortBy={state.sortBy}
+          onSortChange={(val) =>
+            dispatch({ type: "SET_SORT_BY", payload: val })
+          }
           onToggleAddForm={() => dispatch({ type: "TOGGLE_ADD_FORM" })}
         />
 
@@ -267,7 +295,9 @@ export default function Books() {
               <div className="p-6 bg-zinc-50 dark:bg-zinc-800/50 rounded-2xl border border-zinc-200 dark:border-zinc-700">
                 <AddBookForm
                   onAdd={handleAddBook}
-                  onCancel={() => dispatch({ type: "SET_ADD_FORM", payload: false })}
+                  onCancel={() =>
+                    dispatch({ type: "SET_ADD_FORM", payload: false })
+                  }
                   isSubmitting={state.isSubmitting}
                 />
               </div>
@@ -291,9 +321,15 @@ export default function Books() {
               isLoading={state.loading}
               user={user}
               bookReviews={state.bookReviews}
-              onOpenReview={(id) => dispatch({ type: "SET_REVIEW_OPEN", payload: id })}
-              onViewReviews={(id) => dispatch({ type: "SET_VIEW_REVIEWS", payload: id })}
-              onDelete={(id) => dispatch({ type: "SET_DELETE_CONFIRM", payload: id })}
+              onOpenReview={(id) =>
+                dispatch({ type: "SET_REVIEW_OPEN", payload: id })
+              }
+              onViewReviews={(id) =>
+                dispatch({ type: "SET_VIEW_REVIEWS", payload: id })
+              }
+              onDelete={(id) =>
+                dispatch({ type: "SET_DELETE_CONFIRM", payload: id })
+              }
               onCardClick={handleBookClick}
             />
 
@@ -301,14 +337,24 @@ export default function Books() {
             <div className="flex justify-center gap-4 mt-16">
               <Button
                 variant="secondary"
-                onClick={() => dispatch({ type: "SET_PAGE", payload: Math.max(1, state.page - 1) })}
+                onClick={() =>
+                  dispatch({
+                    type: "SET_PAGE",
+                    payload: Math.max(1, state.page - 1),
+                  })
+                }
                 disabled={state.page === 1}
               >
                 Previous
               </Button>
               <Button
                 variant="secondary"
-                onClick={() => dispatch({ type: "SET_PAGE", payload: Math.min(state.totalPages, state.page + 1) })}
+                onClick={() =>
+                  dispatch({
+                    type: "SET_PAGE",
+                    payload: Math.min(state.totalPages, state.page + 1),
+                  })
+                }
                 disabled={state.page === state.totalPages}
               >
                 Next
@@ -316,17 +362,16 @@ export default function Books() {
             </div>
           </div>
 
-
           {/* Sidebar: 4 Columns */}
           <div className="hidden lg:block lg:col-span-4 space-y-8">
             <div className="sticky top-24">
-              <EditorsPick 
-                topRatedBook={state.topRatedBook} 
-                defaultBook={state.books[0]} 
+              <EditorsPick
+                topRatedBook={state.topRatedBook}
+                defaultBook={state.books[0]}
               />
-              <TrendingSidebar 
-                trendingBooks={trendingBooks} 
-                onBookClick={handleBookClick} 
+              <TrendingSidebar
+                trendingBooks={trendingBooks}
+                onBookClick={handleBookClick}
               />
             </div>
           </div>
@@ -344,8 +389,12 @@ export default function Books() {
           rating={state.reviewRating}
           reviewText={state.reviewText}
           isSubmitting={state.isReviewSubmitting}
-          onRatingChange={(rating) => dispatch({ type: "SET_REVIEW_RATING", payload: rating })}
-          onTextChange={(text) => dispatch({ type: "SET_REVIEW_TEXT", payload: text })}
+          onRatingChange={(rating) =>
+            dispatch({ type: "SET_REVIEW_RATING", payload: rating })
+          }
+          onTextChange={(text) =>
+            dispatch({ type: "SET_REVIEW_TEXT", payload: text })
+          }
           onSubmit={handleReviewSubmit}
           onClose={() => dispatch({ type: "RESET_REVIEW_FORM" })}
         />
@@ -358,7 +407,9 @@ export default function Books() {
             dispatch({ type: "SET_DELETE_CONFIRM", payload: null });
             fetchBooks(state.page);
           }}
-          onCancel={() => dispatch({ type: "SET_DELETE_CONFIRM", payload: null })}
+          onCancel={() =>
+            dispatch({ type: "SET_DELETE_CONFIRM", payload: null })
+          }
         />
       </div>
     </div>

@@ -1,5 +1,12 @@
 import { motion } from "motion/react";
-import { Star, MessageCircle, Trash2, BookOpen, ExternalLink, ShoppingCart } from "lucide-react";
+import {
+  Star,
+  MessageCircle,
+  Trash2,
+  BookOpen,
+  ExternalLink,
+  ShoppingCart,
+} from "lucide-react";
 import { Skeleton, Button, Badge } from "./ui/Core";
 
 // Helper for Star Rating Display
@@ -33,7 +40,10 @@ export default function BookList({
     return (
       <div className="grid grid-cols-1 gap-8 mt-8">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="flex flex-col sm:flex-row gap-6 p-6 bg-white dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+          <div
+            key={i}
+            className="flex flex-col sm:flex-row gap-6 p-6 bg-white dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800"
+          >
             <Skeleton className="w-32 sm:w-40 aspect-2/3 rounded-lg shrink-0" />
             <div className="flex-1 space-y-4">
               <div className="flex justify-between">
@@ -134,16 +144,26 @@ export default function BookList({
                     by {book.author}
                   </p>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    {(book.read_url || book.gutenberg_id) ? (
-                      <div title="Available to Read Online" className="text-accent bg-accent/10 border border-accent/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold flex items-center gap-1">
+                    {book.read_url || book.gutenberg_id ? (
+                      <div
+                        title="Available to Read Online"
+                        className="text-blue-600 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 px-2 py-0.5 rounded text-[10px] uppercase font-bold flex items-center gap-1"
+                      >
                         <BookOpen size={10} /> Read
                       </div>
                     ) : (
-                      <div title="Reading Unavailable" className="text-zinc-400 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded text-[10px] uppercase font-bold flex items-center gap-1 opacity-60">
+                      <div
+                        title="Reading Unavailable"
+                        className="text-zinc-400 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 px-2 py-0.5 rounded text-[10px] uppercase font-bold flex items-center gap-1 opacity-60"
+                      >
                         <BookOpen size={10} /> Read
                       </div>
                     )}
-                    <div title="Available to Buy" className="text-blue-500 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold flex items-center gap-1">
+
+                    <div
+                      title="Available to Buy"
+                      className="text-amber-600 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 px-2 py-0.5 rounded text-[10px] uppercase font-bold flex items-center gap-1"
+                    >
                       <ShoppingCart size={10} /> Buy
                     </div>
                   </div>
@@ -165,9 +185,11 @@ export default function BookList({
 
               {/* Description / Blurb */}
               {/* Description / Blurb */}
-              <div 
+              <div
                 className="mt-4 text-zinc-600 dark:text-zinc-400 text-sm leading-relaxed line-clamp-3 md:line-clamp-4 font-sans"
-                dangerouslySetInnerHTML={{ __html: book.description || "No description available." }}
+                dangerouslySetInnerHTML={{
+                  __html: book.description || "No description available.",
+                }}
               />
 
               {/* Footer Actions */}
@@ -176,7 +198,9 @@ export default function BookList({
                   <span>{reviewCount} Reviews</span>
                   <span className="w-1 h-1 bg-zinc-300 rounded-full" />
                   <span>
-                    {book.published_year ? `Published ${book.published_year}` : "Publication year unknown"}
+                    {book.published_year
+                      ? `Published ${book.published_year}`
+                      : "Publication year unknown"}
                   </span>
                 </div>
 
