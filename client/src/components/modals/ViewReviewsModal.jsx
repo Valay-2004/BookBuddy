@@ -76,7 +76,7 @@ export default function ViewReviewsModal({ isOpen, reviews = [], onClose }) {
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <p className="font-bold text-ink dark:text-zinc-100 text-sm">
-                          {r.userName || r.user || "Anonymous Reader"}
+                          {r.reviewer_name || "Anonymous Reader"}
                         </p>
                         <p className="text-xs text-zinc-400">
                           Verified Reviewer
@@ -97,9 +97,9 @@ export default function ViewReviewsModal({ isOpen, reviews = [], onClose }) {
                       </div>
                     </div>
 
-                    {r.reviewText ? (
+                    {r.review_text ? (
                       <p className="text-zinc-600 dark:text-zinc-300 text-sm leading-relaxed font-serif">
-                        "{r.reviewText}"
+                        "{r.review_text}"
                       </p>
                     ) : (
                       <p className="text-zinc-400 text-xs italic">
