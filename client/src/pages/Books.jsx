@@ -266,6 +266,21 @@ export default function Books() {
     }
   };
 
+  const handleViewReviews = async (bookId) => {
+    dispatch({ type: "SET_VIEW_REVIEWS", payload: bookId });
+    if (!state.bookReviews[bookId]) {
+      try {
+        const { data } = await API.get(`/books/${bookId}/reviews`);
+        dispatch({
+          type: "SET_BOOK_REVIEWS",
+          payload: { [bookId]: data },
+        });
+      } catch (err) {
+        toast.error("Failed to load reviews");
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-paper dark:bg-dark-paper">
       <div className="editorial-container py-12">
@@ -324,9 +339,7 @@ export default function Books() {
               onOpenReview={(id) =>
                 dispatch({ type: "SET_REVIEW_OPEN", payload: id })
               }
-              onViewReviews={(id) =>
-                dispatch({ type: "SET_VIEW_REVIEWS", payload: id })
-              }
+              onViewReviews={handleViewReviews}
               onDelete={(id) =>
                 dispatch({ type: "SET_DELETE_CONFIRM", payload: id })
               }
