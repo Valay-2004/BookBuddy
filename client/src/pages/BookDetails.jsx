@@ -15,8 +15,10 @@ import toast from "react-hot-toast";
 
 import API from "../services/api";
 import { fetchBookDetails } from "../services/openLibrary";
-import { Skeleton, Button, cn } from "../components/ui/Core";
+import { Skeleton, Button, cn, Badge } from "../components/ui/Core";
 import { useAuth } from "../context/AuthContext";
+import { MessageCircle, Star } from "lucide-react";
+import ReviewModal from "../components/modals/ReviewModal";
 
 export default function BookDetails() {
   const { id } = useParams();
@@ -26,6 +28,13 @@ export default function BookDetails() {
   const [book, setBook] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
     const loadBook = async () => {
@@ -82,8 +91,46 @@ export default function BookDetails() {
       }
     };
 
-    if (id) loadBook();
+    const loadReviews = async () => {
+      setReviewsLoading(true);
+      try {
+        const { data } = await API.get(`/books/${id}/reviews`);
+        setReviews(data);
+      } catch (err) {
+        console.error("Failed to load reviews", err);
+      } finally {
+        setReviewsLoading(false);
+      }
+    };
+
+    if (id) {
+      loadBook();
+      if (!id.startsWith("OL_")) {
+        loadReviews();
+      }
+    }
   }, [id, token]);
+
+  const handleReviewSubmit = async () => {
+    setIsSubmittingReview(true);
+    try {
+      await API.post(`/books/${id}/reviews`, {
+        rating: reviewRating,
+        reviewText,
+      });
+      toast.success("Review posted");
+      setReviewModalOpen(false);
+      setReviewRating(5);
+      setReviewText("");
+      // Refresh reviews
+      const { data } = await API.get(`/books/${id}/reviews`);
+      setReviews(data);
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Failed to post review");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -243,6 +290,115 @@ export default function BookDetails() {
             </div>
           </div>
         </motion.div>
+
+        {/* Reviews Section */}
+        {!id.startsWith("OL_") && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-12 bg-white dark:bg-zinc-900 rounded-3xl shadow-lg border border-zinc-100 dark:border-zinc-800 overflow-hidden"
+          >
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-2xl font-serif font-bold text-ink dark:text-white flex items-center gap-2">
+                    <MessageCircle className="text-accent" size={24} />
+                    Reader Reviews
+                  </h2>
+                  <p className="text-zinc-500 text-sm mt-1">
+                    {reviews.length} total reviews
+                  </p>
+                </div>
+
+                {user && (
+                  <Button
+                    onClick={() => setReviewModalOpen(true)}
+                    variant="outline"
+                    className="gap-2"
+                  >
+                    <MessageCircle size={18} />
+                    Write Review
+                  </Button>
+                )}
+              </div>
+
+              {reviewsLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-24 w-full" />
+                </div>
+              ) : reviews.length === 0 ? (
+                <div className="text-center py-12 border-2 border-dashed border-zinc-100 dark:border-zinc-800 rounded-2xl">
+                  <MessageCircle
+                    size={40}
+                    className="mx-auto text-zinc-300 mb-3"
+                  />
+                  <p className="text-zinc-500 font-serif italic">
+                    No reviews yet. Be the first to share your thoughts!
+                  </p>
+                </div>
+              ) : (
+                <div className="grid gap-6">
+                  {reviews.map((r, idx) => (
+                    <div
+                      key={idx}
+                      className="p-6 bg-zinc-50 dark:bg-zinc-950/50 rounded-2xl border border-zinc-100 dark:border-zinc-800"
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center text-accent font-bold">
+                            {r.reviewer_name?.charAt(0) || "U"}
+                          </div>
+                          <div>
+                            <p className="font-bold text-ink dark:text-white leading-none">
+                              {r.reviewer_name}
+                            </p>
+                            <p className="text-xs text-zinc-500 mt-1">
+                              {new Date(r.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex gap-0.5">
+                          {[...Array(5)].map((_, i) => (
+                            <Star
+                              key={i}
+                              size={14}
+                              className={
+                                i < r.rating
+                                  ? "fill-yellow-400 text-yellow-400"
+                                  : "text-zinc-200 dark:text-zinc-700"
+                              }
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-zinc-600 dark:text-zinc-300 font-serif leading-relaxed">
+                        {r.review_text || (
+                          <span className="italic opacity-60">
+                            Rated without comment.
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Modals */}
+        <ReviewModal
+          isOpen={reviewModalOpen}
+          rating={reviewRating}
+          reviewText={reviewText}
+          isSubmitting={isSubmittingReview}
+          onRatingChange={setReviewRating}
+          onTextChange={setReviewText}
+          onSubmit={handleReviewSubmit}
+          onClose={() => setReviewModalOpen(false)}
+        />
       </div>
     </div>
   );
