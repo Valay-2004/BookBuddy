@@ -1,27 +1,25 @@
 const db = require("../config/database");
 
-// Fetch paginated books with aggregated review stats and sorting
+// Fetch paginated books with denormalized review stats and sorting
+// Optimization: Using COUNT(*) OVER() to get total count in a single query
 async function getAllBooks(page = 1, limit = 5, sortBy = "newest") {
   const offset = (page - 1) * limit;
 
-  let orderBy = "b.id DESC"; // Default: Adding time (proxy via ID)
-  if (sortBy === "title") orderBy = "b.title ASC";
-  if (sortBy === "year_new") orderBy = "b.published_year DESC NULLS LAST";
-  if (sortBy === "year_old") orderBy = "b.published_year ASC NULLS LAST";
+  let orderBy = "id DESC"; // Default: Adding time (proxy via ID)
+  if (sortBy === "title") orderBy = "title ASC";
+  if (sortBy === "year_new") orderBy = "published_year DESC NULLS LAST";
+  if (sortBy === "year_old") orderBy = "published_year ASC NULLS LAST";
 
   const { rows } = await db.query(
-    `SELECT b.id, b.title, b.author, b.description, b.cover_url, b.published_year,
-            b.gutenberg_id, b.read_url,
-            COALESCE(ROUND(AVG(r.rating), 1), 0) AS avg_rating,
-            COUNT(r.id)::int AS review_count
-     FROM books b LEFT JOIN reviews r ON b.id = r.book_id
-     GROUP BY b.id
+    `SELECT *, COUNT(*) OVER()::int AS total 
+     FROM books
      ORDER BY ${orderBy}
      LIMIT $1 OFFSET $2`,
     [limit, offset],
   );
-  const countRes = await db.query("SELECT COUNT(*)::int AS total FROM books");
-  return { rows, total: countRes.rows[0].total };
+
+  const total = rows.length > 0 ? rows[0].total : 0;
+  return { rows, total };
 }
 
 // Create a new book entry
@@ -56,43 +54,30 @@ async function deleteBookById(id) {
   return rowCount > 0;
 }
 
-// Search books by title or author (case-insensitive)
+// Search books by title or author (case-insensitive) - uses denormalized columns
 async function searchBooks(query) {
   const { rows } = await db.query(
-    `SELECT b.id, b.title, b.author, b.description, b.cover_url, b.published_year,
-            b.gutenberg_id, b.read_url,
-            COALESCE(ROUND(AVG(r.rating), 1), 0) AS avg_rating,
-            COUNT(r.id)::int AS review_count
-     FROM books b LEFT JOIN reviews r ON b.id = r.book_id
-     WHERE b.title ILIKE $1 OR b.author ILIKE $1
-     GROUP BY b.id ORDER BY b.id`,
+    `SELECT * FROM books 
+     WHERE title ILIKE $1 OR author ILIKE $1
+     ORDER BY id DESC LIMIT 50`,
     [`%${query}%`],
   );
   return rows;
 }
 
-// Get the highest-rated book (must have at least 1 review)
+// Get the highest-rated book (must have at least 1 review) - uses denormalized columns
 async function getTopRatedBook() {
   const { rows } = await db.query(
-    `SELECT b.*, COALESCE(AVG(r.rating), 0) AS avg_rating, COUNT(r.id)::int AS review_count
-     FROM books b LEFT JOIN reviews r ON b.id = r.book_id
-     GROUP BY b.id HAVING COUNT(r.id) > 0
+    `SELECT * FROM books 
+     WHERE review_count > 0
      ORDER BY avg_rating DESC, review_count DESC LIMIT 1`,
   );
   return rows[0];
 }
 
-// Get a single book by ID with review stats
+// Get a single book by ID with review stats - uses denormalized columns
 async function getBookById(id) {
-  const { rows } = await db.query(
-    `SELECT b.id, b.title, b.author, b.description, b.cover_url, b.published_year,
-            b.gutenberg_id, b.read_url,
-            COALESCE(ROUND(AVG(r.rating), 1), 0) AS avg_rating,
-            COUNT(r.id)::int AS review_count
-     FROM books b LEFT JOIN reviews r ON b.id = r.book_id
-     WHERE b.id = $1 GROUP BY b.id`,
-    [id],
-  );
+  const { rows } = await db.query(`SELECT * FROM books WHERE id = $1`, [id]);
   return rows[0];
 }
 
