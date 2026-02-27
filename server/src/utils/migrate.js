@@ -125,6 +125,43 @@ async function runMigrations() {
       CREATE INDEX IF NOT EXISTS idx_reading_list_user_id ON reading_lists(user_id);
     `);
 
+    // --- Performance Optimization: Denormalized Review Stats ---
+    console.log("Applying denormalization optimizations...");
+    await db.query(`
+      -- Add columns
+      ALTER TABLE books ADD COLUMN IF NOT EXISTS avg_rating NUMERIC(2,1) DEFAULT 0;
+      ALTER TABLE books ADD COLUMN IF NOT EXISTS review_count INTEGER DEFAULT 0;
+
+      -- Backfill from existing data (only if they are 0/empty to be safe)
+      UPDATE books SET
+        avg_rating = sub.avg_rating,
+        review_count = sub.review_count
+      FROM (
+        SELECT book_id, ROUND(AVG(rating), 1) AS avg_rating, COUNT(*) AS review_count
+        FROM reviews GROUP BY book_id
+      ) sub WHERE books.id = sub.book_id AND (books.review_count = 0 OR books.review_count IS NULL);
+
+      -- Trigger function to keep stats in sync
+      CREATE OR REPLACE FUNCTION update_book_review_stats() RETURNS TRIGGER AS $$
+      BEGIN
+        UPDATE books SET
+          avg_rating = COALESCE((SELECT ROUND(AVG(rating), 1) FROM reviews WHERE book_id = COALESCE(NEW.book_id, OLD.book_id)), 0),
+          review_count = COALESCE((SELECT COUNT(*) FROM reviews WHERE book_id = COALESCE(NEW.book_id, OLD.book_id)), 0)
+        WHERE id = COALESCE(NEW.book_id, OLD.book_id);
+        RETURN NULL;
+      END;
+      $$ LANGUAGE plpgsql;
+
+      -- Create trigger
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trg_review_stats') THEN
+          CREATE TRIGGER trg_review_stats
+          AFTER INSERT OR UPDATE OR DELETE ON reviews
+          FOR EACH ROW EXECUTE FUNCTION update_book_review_stats();
+        END IF;
+      END $$;
+    `);
+
     console.log("✅ Database schema is up to date.");
   } catch (err) {
     console.error("❌ Migration failed:", err.message);
