@@ -7,6 +7,7 @@ const {
   getBookById: getBookModelById,
 } = require("../models/book.model");
 const asyncHandler = require("../utils/asyncHandler");
+const cache = require("../utils/cache");
 
 // GET /api/books — paginated list
 const listBooks = asyncHandler(async (req, res) => {
@@ -14,8 +15,14 @@ const listBooks = asyncHandler(async (req, res) => {
   const limit = parseInt(req.query.limit) || 5;
   const sortBy = req.query.sortBy || "newest";
 
+  const cacheKey = `books:page:${page}:limit:${limit}:sort:${sortBy}`;
+  const cachedData = cache.get(cacheKey);
+  if (cachedData) {
+    return res.json(cachedData);
+  }
+
   const { rows, total } = await getAllBooks(page, limit, sortBy);
-  res.json({
+  const response = {
     success: true,
     page,
     limit,
@@ -23,7 +30,10 @@ const listBooks = asyncHandler(async (req, res) => {
     total,
     totalPages: Math.ceil(total / limit),
     books: rows,
-  });
+  };
+
+  cache.set(cacheKey, response);
+  res.json(response);
 });
 
 // POST /api/books — admin creates a book
@@ -53,6 +63,11 @@ const addBook = asyncHandler(async (req, res) => {
     gutenberg_id,
     read_url,
   );
+
+  // Invalidate books cache
+  cache.invalidate("books:*");
+  cache.invalidate("top-rated");
+
   res.status(201).json(newBook);
 });
 
@@ -64,6 +79,12 @@ const deleteBook = asyncHandler(async (req, res) => {
     error.status = 404;
     throw error;
   }
+
+  // Invalidate caches
+  cache.invalidate("books:*");
+  cache.invalidate(`book:${req.params.id}`);
+  cache.invalidate("top-rated");
+
   res.json({ success: true, message: "Book deleted successfully" });
 });
 
@@ -75,23 +96,53 @@ const searchBooks = asyncHandler(async (req, res) => {
     error.status = 400;
     throw error;
   }
-  res.json({ success: true, books: await searchModel(q) });
+
+  const cacheKey = `search:${q.toLowerCase()}`;
+  const cachedData = cache.get(cacheKey);
+  if (cachedData) {
+    return res.json(cachedData);
+  }
+
+  const books = await searchModel(q);
+  const response = { success: true, books };
+
+  cache.set(cacheKey, response);
+  res.json(response);
 });
 
 // GET /api/books/top-rated — single highest-rated book
 const getTopRated = asyncHandler(async (req, res) => {
-  res.json({ success: true, book: (await getTopRatedBook()) || null });
+  const cacheKey = "top-rated";
+  const cachedData = cache.get(cacheKey);
+  if (cachedData) {
+    return res.json(cachedData);
+  }
+
+  const book = await getTopRatedBook();
+  const response = { success: true, book: book || null };
+
+  cache.set(cacheKey, response);
+  res.json(response);
 });
 
 // GET /api/books/:id — single book details
 const getBookById = asyncHandler(async (req, res) => {
+  const cacheKey = `book:${req.params.id}`;
+  const cachedData = cache.get(cacheKey);
+  if (cachedData) {
+    return res.json(cachedData);
+  }
+
   const book = await getBookModelById(req.params.id);
   if (!book) {
     const error = new Error("Book not found.");
     error.status = 404;
     throw error;
   }
-  res.json({ success: true, book });
+
+  const response = { success: true, book };
+  cache.set(cacheKey, response);
+  res.json(response);
 });
 
 module.exports = {
