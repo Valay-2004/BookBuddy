@@ -86,14 +86,13 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-// Use cron job instead of keepAlive
-// it's for referential purpose only
-// Keep alive the backend with every 10 min ping
+// Optional: Keep alive the backend with every 10 min ping (useful for Render free tier)
+// To enable, uncomment the line below and the call inside app.listen()
 // const startKeepAlive = require("./src/utils/keepAlive");
 
 runMigrations().then(() => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    startKeepAlive();
+    // startKeepAlive(); // Uncomment to enable periodic self-pings
   });
 });
