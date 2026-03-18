@@ -13,25 +13,26 @@ async function addReview({ userId, bookId, rating, reviewText }) {
   return rows[0];
 }
 
-// Get all reviews for a specific book
+// Get all reviews for a specific book - limit to latest 50
 async function getReviewsForBook(bookId) {
   const { rows } = await db.query(
     `SELECT r.id, r.rating, r.review_text, r.created_at, u.name AS reviewer_name
      FROM reviews r JOIN users u ON r.user_id = u.id
-     WHERE r.book_id = $1 ORDER BY r.created_at DESC`,
+     WHERE r.book_id = $1 ORDER BY r.created_at DESC
+     LIMIT 50`,
     [bookId],
   );
   return rows;
 }
 
-// Get all books ranked by average rating
+// Get all books ranked by average rating (limit to top 50)
 async function getBookRatings() {
   const { rows } = await db.query(
-    `SELECT b.id, b.title, b.author,
-            COALESCE(ROUND(AVG(r.rating), 2), 0) AS average_rating,
-            COUNT(r.id)::int AS total_reviews
-     FROM books b LEFT JOIN reviews r ON b.id = r.book_id
-     GROUP BY b.id ORDER BY average_rating DESC`,
+    `SELECT id, title, author, avg_rating AS average_rating, review_count AS total_reviews
+     FROM books
+     WHERE review_count > 0
+     ORDER BY avg_rating DESC, review_count DESC
+     LIMIT 50`,
   );
   return rows;
 }
