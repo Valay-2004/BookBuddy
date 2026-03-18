@@ -37,20 +37,38 @@ export default function BookDetails() {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
-    const loadBook = async () => {
+    const loadData = async () => {
       setLoading(true);
       setError(null);
+      setReviewsLoading(true);
+
       try {
-        let bookData = null;
+        const isExternal = id.startsWith("OL_");
 
-        if (id.startsWith("OL_")) {
-          // Open Library external book
-          const olid = id.replace("OL_", "");
-          bookData = await fetchBookDetails(olid);
+        // Prepare parallel requests
+        const requests = [
+          isExternal
+            ? fetchBookDetails(id.replace("OL_", ""))
+            : API.get(`/books/${id}`).then((res) => res.data.book),
+        ];
 
-          // Try to sync to DB silently (admin-only, may fail)
-          if (bookData && token) {
-            // Quality Check: Ensure it has a cover and a non-generic, substantial summary
+        // Only fetch reviews for internal books
+        if (!isExternal) {
+          requests.push(
+            API.get(`/books/${id}/reviews`).then((res) => res.data),
+          );
+        }
+
+        const results = await Promise.allSettled(requests);
+
+        // Process Book Result
+        if (results[0].status === "fulfilled") {
+          const bookData = results[0].value;
+          if (!bookData) throw new Error("Book not found");
+          setBook(bookData);
+
+          // Silent sync for admin (external books)
+          if (isExternal && bookData && token) {
             const isGeneric =
               bookData.description?.toLowerCase().includes("a book titled") ||
               bookData.description?.toLowerCase() ===
@@ -59,55 +77,37 @@ export default function BookDetails() {
               (bookData.description?.split(/\s+/).length || 0) >= 20;
 
             if (bookData.cover_url && !isGeneric && hasEnoughWords) {
-              try {
-                await API.post("/books", {
-                  title: bookData.title,
-                  author: bookData.author,
-                  description: bookData.description,
-                  cover_url: bookData.cover_url,
-                  published_year: bookData.published_year,
-                  read_url: bookData.read_url,
-                  gutenberg_id: bookData.gutenberg_id,
-                });
-              } catch {
-                // Ignore — already exists or network error
-              }
+              API.post("/books", {
+                title: bookData.title,
+                author: bookData.author,
+                description: bookData.description,
+                cover_url: bookData.cover_url,
+                published_year: bookData.published_year,
+                read_url: bookData.read_url,
+                gutenberg_id: bookData.gutenberg_id,
+              }).catch(() => {}); // Ignore errors
             }
           }
         } else {
-          // Internal book
-          const { data } = await API.get(`/books/${id}`);
-          bookData = data.book;
+          throw new Error("Failed to load book");
         }
 
-        if (!bookData) throw new Error("Book not found");
-        setBook(bookData);
+        // Process Reviews Result
+        if (!isExternal && results[1]?.status === "fulfilled") {
+          setReviews(results[1].value);
+        }
       } catch (err) {
         console.error(err);
         setError("Failed to load book details.");
         toast.error("Could not load book.");
       } finally {
         setLoading(false);
-      }
-    };
-
-    const loadReviews = async () => {
-      setReviewsLoading(true);
-      try {
-        const { data } = await API.get(`/books/${id}/reviews`);
-        setReviews(data);
-      } catch (err) {
-        console.error("Failed to load reviews", err);
-      } finally {
         setReviewsLoading(false);
       }
     };
 
     if (id) {
-      loadBook();
-      if (!id.startsWith("OL_")) {
-        loadReviews();
-      }
+      loadData();
     }
   }, [id, token]);
 
