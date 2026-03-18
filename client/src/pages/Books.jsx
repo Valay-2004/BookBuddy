@@ -148,16 +148,31 @@ export default function Books() {
   const fetchBooks = useCallback(async (pageNum, sort) => {
     dispatch({ type: "SET_LOADING", payload: true });
     try {
-      const { data } = await API.get(
-        `/books?page=${pageNum}&limit=5&sortBy=${sort}`,
-      );
-      const booksWithCovers = attachCoverUrls(data.books);
-      dispatch({
-        type: "SET_BOOKS",
-        payload: { books: booksWithCovers, totalPages: data.totalPages },
-      });
+      // Parallel fetch for books and top rated
+      const [booksRes, topRatedRes] = await Promise.allSettled([
+        API.get(`/books?page=${pageNum}&limit=5&sortBy=${sort}`),
+        API.get("/books/top-rated"),
+      ]);
+
+      if (booksRes.status === "fulfilled") {
+        const booksWithCovers = attachCoverUrls(booksRes.value.data.books);
+        dispatch({
+          type: "SET_BOOKS",
+          payload: {
+            books: booksWithCovers,
+            totalPages: booksRes.value.data.totalPages,
+          },
+        });
+      } else {
+        toast.error("Failed to load library");
+      }
+
+      if (topRatedRes.status === "fulfilled" && topRatedRes.value.data.book) {
+        const [bookWithCover] = attachCoverUrls([topRatedRes.value.data.book]);
+        dispatch({ type: "SET_TOP_RATED", payload: bookWithCover });
+      }
     } catch (err) {
-      toast.error("Failed to load library");
+      console.error("Fetch error", err);
     } finally {
       dispatch({ type: "SET_LOADING", payload: false });
     }
@@ -168,7 +183,7 @@ export default function Books() {
     if (state.searchTerm) {
       const delayDebounceFn = setTimeout(() => {
         handleSearch(state.searchTerm);
-      }, 500);
+      }, 300); // Reduce from 500ms to 300ms for snappier feel
       return () => clearTimeout(delayDebounceFn);
     } else {
       // If no search term, fetch normal list
@@ -195,27 +210,23 @@ export default function Books() {
   // N+1 problem fixed: Reviews are now aggregated on the server in listBooks
   // We only need to fetch reviews when the user actually views them or opens the review modal
 
-  // Fetch top rated book for sidebar
-  useEffect(() => {
-    const fetchTopRated = async () => {
-      try {
-        const { data } = await API.get("/books/top-rated");
-        if (data.book) {
-          const [bookWithCover] = attachCoverUrls([data.book]);
-          dispatch({ type: "SET_TOP_RATED", payload: bookWithCover });
-        }
-      } catch (e) {
-        console.error("Top rated error", e);
-      }
-    };
-    fetchTopRated();
-  }, []);
+  // Removed old fetchTopRated effect as it is now parallelized in fetchBooks
 
   const [trendingBooks, setTrendingBooks] = useState([]);
 
   useEffect(() => {
+    // Session cache for trending books
+    const cachedTrending = sessionStorage.getItem("trending_books");
+    if (cachedTrending) {
+      setTrendingBooks(JSON.parse(cachedTrending));
+      return;
+    }
+
     import("../services/openLibrary").then(({ fetchTrendingBooks }) => {
-      fetchTrendingBooks().then(setTrendingBooks);
+      fetchTrendingBooks().then((books) => {
+        setTrendingBooks(books);
+        sessionStorage.setItem("trending_books", JSON.stringify(books));
+      });
     });
   }, []);
 
