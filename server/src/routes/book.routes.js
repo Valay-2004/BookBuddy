@@ -10,6 +10,7 @@ const {
 } = require("../controllers/book.controller");
 const authenticate = require("../middleware/auth");
 const { authorizeRole } = require("../middleware/auth");
+const cacheFor = require("../middleware/cacheHeaders");
 const router = express.Router();
 
 // Validation for book creation
@@ -28,10 +29,10 @@ const handleValidation = (req, res, next) => {
 };
 
 // Public routes
-router.get("/", listBooks);
-router.get("/search", searchBooks);
-router.get("/top-rated", getTopRated);
-router.get("/:id", getBookById);
+router.get("/", cacheFor(60), listBooks);
+router.get("/search", cacheFor(60), searchBooks);
+router.get("/top-rated", cacheFor(60), getTopRated);
+router.get("/:id", cacheFor(300), getBookById);
 
 // Admin-only routes
 router.post(

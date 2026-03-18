@@ -6,6 +6,7 @@ const {
   listBooksWithRatings,
 } = require("../controllers/review.controller");
 const authenticate = require("../middleware/auth");
+const cacheFor = require("../middleware/cacheHeaders");
 const router = express.Router();
 
 // Validation for review creation
@@ -22,10 +23,10 @@ const handleValidation = (req, res, next) => {
 };
 
 // Public: get all books ranked by rating
-router.get("/books/ratings", listBooksWithRatings);
+router.get("/books/ratings", cacheFor(60), listBooksWithRatings);
 
 // Public: get reviews for a specific book
-router.get("/books/:id/reviews", getBookReviews);
+router.get("/books/:id/reviews", cacheFor(60), getBookReviews);
 
 // Protected: add/update a review
 router.post(
