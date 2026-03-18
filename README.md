@@ -31,6 +31,8 @@ Built with a modern technology stack, it features a responsive and aesthetic use
 - **Database**: [PostgreSQL](https://www.postgresql.org/)
 - **Authentication**: JSON Web Tokens (JWT) & bcrypt
 - **Security**: Helmet, CORS, Rate Limiting
+- **Caching**: RFC-compliant API caching with `stale-while-revalidate`
+- **Performance**: Denormalized review stats & Trigram-based search
 
 ## ⚙️ Prerequisites
 
@@ -137,12 +139,35 @@ The application will be available at `http://localhost:5173`
 - **Schedule**: Set up a Cron Job on Render to run `node src/utils/seed.js` every 15 days (`0 0 */15 * *`).
 - **Refresh**: The "Trending Now" sidebar automatically randomizes from a pool of trending titles on every load.
 
-### 2. Sorting & Discovery
+### 2. Preventing Spin-down (Optional)
+
+If deploying to services like **Render (Free Tier)**, the backend may spin down after 15 minutes of inactivity. We include a `keepAlive` utility that pings the server every 10 minutes to prevent this.
+
+To enable it:
+
+1. Open `server/server.js`.
+2. Uncomment the `require` for `startKeepAlive` (around line 91).
+3. Uncomment the `startKeepAlive()` call inside `app.listen()` (around line 97).
+
+### 3. API Caching (Performance)
+
+The backend implements a smart caching strategy using `Cache-Control` headers:
+- **Public Cache**: Responses can be cached by browsers and CDNs.
+- **Stale-While-Revalidate**: Allows serving slightly outdated content while refreshing it in the background, ensuring near-instant load times for repeated requests.
+- **Granular Control**: Different TTLs (Time-To-Live) for list views (60s) vs. individual book details (300s).
+
+### 4. Database Performance & Search
+
+- **Denormalization**: Book ratings and review counts are stored directly on the `books` table and kept in sync via **PostgreSQL Triggers**. This eliminates expensive `JOIN` and `AVG` operations on every list request.
+- **Search Efficiency**: Uses the `pg_trgm` extension for **Trigram-based indexing**. This allows for extremely fast case-insensitive partial matching (`ILIKE`) even as the database grows.
+- **Self-Healing Migrations**: The `migrate.js` utility automatically handles schema drift, column renaming, and index creation on every server start.
+
+### 5. Sorting & Discovery
 
 - **Sorting**: Organize the library by **Latest Added**, **Name (A-Z)**, or **Publication Year**.
 - **Deep Linking**: All search and sort states are persisted in the URL for easy sharing.
 
-### 3. Optimized Reading Experience
+### 6. Optimized Reading Experience
 
 - **Direct Access**: "Read" buttons point directly to the Project Gutenberg HTML cache or the Archive.org viewer.
 
