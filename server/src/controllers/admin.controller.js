@@ -1,14 +1,15 @@
 const db = require("../config/database");
 const asyncHandler = require("../utils/asyncHandler");
 
-// GET /api/admin/reviews — list all reviews (admin only)
+// GET /api/admin/reviews — list all reviews (admin only) - limit to 100 latest
 const getAllReviews = asyncHandler(async (req, res) => {
   const { rows } = await db.query(
     `SELECT r.id, r.rating, r.review_text, u.name AS user_name, b.title AS book_title
      FROM reviews r
      JOIN users u ON r.user_id = u.id
      JOIN books b ON r.book_id = b.id
-     ORDER BY r.created_at DESC`,
+     ORDER BY r.created_at DESC
+     LIMIT 100`,
   );
   res.json({ success: true, data: rows });
 });
