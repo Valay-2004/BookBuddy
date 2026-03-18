@@ -84,9 +84,12 @@ app.use("/api/reading-lists", readingListRoutes);
 // Centralized error handler (must be after routes)
 app.use(errorHandler);
 
-// --- Start ---
 const PORT = process.env.PORT || 5000;
-const startKeepAlive = require("./src/utils/keepAlive");
+
+// Use cron job instead of keepAlive
+// it's for referential purpose only
+// Keep alive the backend with every 10 min ping
+// const startKeepAlive = require("./src/utils/keepAlive");
 
 runMigrations().then(() => {
   app.listen(PORT, () => {
